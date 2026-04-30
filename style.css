@@ -54,6 +54,31 @@ body {
   margin-left: auto;
   display: flex;
   gap: 8px;
+  align-items: center;
+}
+
+.ccy-toggle {
+  display: inline-flex;
+  border: 1px solid #e3e6eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ccy-btn {
+  background: #fff;
+  border: none;
+  color: #5b6470;
+  font-size: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.ccy-btn + .ccy-btn { border-left: 1px solid #e3e6eb; }
+
+.ccy-btn.active {
+  background: #2c7be5;
+  color: #fff;
 }
 
 .ghost {

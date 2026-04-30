@@ -1,12 +1,16 @@
 (function () {
+  const OZ_TO_GRAM = 31.1034768;
   const ctx = document.getElementById('chart').getContext('2d');
   const legendPriceEl = document.getElementById('legendPrice');
   const legendChangeEl = document.getElementById('legendChange');
+  const legendUnitEl = document.getElementById('legendUnit');
   const currentRangeEl = document.getElementById('currentRange');
 
-  let allData = [];
+  let goldData = [];
+  let idrRateMap = new Map();
   let chart = null;
   let currentRangeKey = '10';
+  let currentCurrency = 'IDR';
 
   function parseFredCSV(text) {
     const lines = text.trim().split('\n');
@@ -14,27 +18,82 @@
     for (let i = 1; i < lines.length; i++) {
       const [date, val] = lines[i].split(',');
       if (!date || !val || val === '.' || val === 'NA') continue;
-      const price = parseFloat(val);
-      if (Number.isFinite(price)) out.push({ date, price });
+      const num = parseFloat(val);
+      if (Number.isFinite(num)) out.push({ date, value: num });
     }
     return out;
   }
 
-  async function loadData() {
+  async function fetchCSV(url) {
     try {
-      const res = await fetch(window.FRED_CSV_URL, { cache: 'no-cache' });
-      if (!res.ok) throw new Error(`FRED HTTP ${res.status}`);
+      const res = await fetch(url, { cache: 'no-cache' });
+      if (!res.ok) return null;
       const text = await res.text();
-      const fred = parseFredCSV(text);
-      if (!fred.length) throw new Error('FRED returned empty data');
-      return [...window.GOLD_STATIC, ...fred];
-    } catch (err) {
-      console.warn('FRED fetch failed, using static fallback only:', err);
-      return [...window.GOLD_STATIC];
+      const head = text.slice(0, 100).toUpperCase();
+      if (!head.includes('DATE')) return null;
+      return parseFredCSV(text);
+    } catch {
+      return null;
     }
   }
 
+  async function loadAll() {
+    const [goldFred, idrFred] = await Promise.all([
+      fetchCSV('/api/fred-gold.csv'),
+      fetchCSV('/api/fred-idr.csv')
+    ]);
+
+    if (goldFred && goldFred.length) {
+      goldData = [
+        ...window.GOLD_STATIC.map(d => ({ date: d.date, price: d.price })),
+        ...goldFred.map(d => ({ date: d.date, price: d.value }))
+      ];
+    } else {
+      console.warn('Gold FRED data unavailable; using static fallback only.');
+      goldData = window.GOLD_STATIC.map(d => ({ date: d.date, price: d.price }));
+    }
+
+    if (idrFred && idrFred.length) {
+      // Forward-fill rates so weekend/holiday gold prices still get a rate.
+      let lastRate = null;
+      const sorted = idrFred.slice().sort((a, b) => a.date.localeCompare(b.date));
+      for (const r of sorted) {
+        lastRate = r.value;
+        idrRateMap.set(r.date, lastRate);
+      }
+    } else {
+      console.warn('IDR FRED data unavailable; IDR mode will be disabled.');
+    }
+  }
+
+  function nearestIdrRate(dateStr) {
+    if (idrRateMap.has(dateStr)) return idrRateMap.get(dateStr);
+    // Walk back up to ~10 days to find nearest prior trading day rate.
+    const d = new Date(dateStr);
+    for (let i = 0; i < 10; i++) {
+      d.setDate(d.getDate() - 1);
+      const key = d.toISOString().slice(0, 10);
+      if (idrRateMap.has(key)) return idrRateMap.get(key);
+    }
+    return null;
+  }
+
+  function projectData(data, currency) {
+    if (currency === 'USD') {
+      return data.map(d => ({ date: d.date, value: d.price }));
+    }
+    // IDR mode: convert USD/oz to IDR/gram. Skip rows without a rate (pre-1971).
+    const out = [];
+    for (const d of data) {
+      const rate = nearestIdrRate(d.date);
+      if (rate == null) continue;
+      out.push({ date: d.date, value: (d.price * rate) / OZ_TO_GRAM });
+    }
+    return out;
+  }
+
   function filterByYears(data, years) {
+    if (!data.length) return data;
     if (years === 'all') return data;
     const last = new Date(data[data.length - 1].date);
     const cutoff = new Date(last);
@@ -42,32 +101,46 @@
     return data.filter(d => new Date(d.date) >= cutoff);
   }
 
-  function updateLegend(filtered) {
+  function formatPrice(v, currency) {
+    if (currency === 'USD') {
+      return v.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    }
+    return 'Rp ' + Math.round(v).toLocaleString('id-ID');
+  }
+
+  function updateLegend(filtered, currency) {
+    legendUnitEl.textContent = currency === 'USD' ? 'Gold (USD/t.oz)' : 'Gold (IDR/gram)';
+    if (!filtered.length) {
+      legendPriceEl.textContent = '—';
+      legendChangeEl.textContent = '—';
+      return;
+    }
     if (filtered.length < 2) {
-      legendPriceEl.textContent = filtered[0]?.price.toFixed(1) ?? '—';
+      legendPriceEl.textContent = formatPrice(filtered[0].value, currency);
       legendChangeEl.textContent = '—';
       return;
     }
     const last = filtered[filtered.length - 1];
     const first = filtered[0];
-    const diff = last.price - first.price;
-    const pct = (diff / first.price) * 100;
+    const diff = last.value - first.value;
+    const pct = (diff / first.value) * 100;
     const sign = diff >= 0 ? '+' : '';
-    legendPriceEl.textContent = last.price.toLocaleString('en-US', {
-      minimumFractionDigits: 1, maximumFractionDigits: 1
-    });
-    legendChangeEl.textContent = `${sign}${diff.toFixed(1)} (${sign}${pct.toFixed(1)}%)`;
+    legendPriceEl.textContent = formatPrice(last.value, currency);
+    const diffStr = currency === 'USD'
+      ? `${sign}${diff.toFixed(1)}`
+      : `${sign}Rp ${Math.round(diff).toLocaleString('id-ID')}`;
+    legendChangeEl.textContent = `${diffStr} (${sign}${pct.toFixed(1)}%)`;
     legendChangeEl.classList.toggle('up', diff >= 0);
   }
 
-  function buildChart(filtered) {
+  function buildChart(filtered, currency) {
     if (chart) chart.destroy();
     chart = new Chart(ctx, {
       type: 'line',
       data: {
         labels: filtered.map(d => d.date),
         datasets: [{
-          data: filtered.map(d => d.price),
+          data: filtered.map(d => d.value),
           borderColor: '#2c7be5',
           backgroundColor: 'rgba(44,123,229,0.05)',
           borderWidth: 1.2,
@@ -94,7 +167,13 @@
             padding: 8,
             callbacks: {
               title: items => items[0].label,
-              label: item => `USD ${item.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/oz`
+              label: item => {
+                const v = item.parsed.y;
+                if (currency === 'USD') {
+                  return `USD ${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/oz`;
+                }
+                return `Rp ${Math.round(v).toLocaleString('id-ID')}/gram`;
+              }
             }
           }
         },
@@ -120,7 +199,9 @@
             ticks: {
               color: '#8892a0',
               font: { size: 11 },
-              callback: v => v.toLocaleString('en-US')
+              callback: v => currency === 'USD'
+                ? v.toLocaleString('en-US')
+                : Math.round(v).toLocaleString('id-ID')
             },
             border: { display: false }
           }
@@ -129,36 +210,59 @@
     });
   }
 
-  function setRange(rangeKey) {
-    currentRangeKey = rangeKey;
-    const filtered = filterByYears(allData, rangeKey);
-    buildChart(filtered);
-    updateLegend(filtered);
-    currentRangeEl.textContent = rangeKey === 'all' ? 'All' : `${rangeKey}Y`;
+  function render() {
+    const projected = projectData(goldData, currentCurrency);
+    const filtered = filterByYears(projected, currentRangeKey);
+    buildChart(filtered, currentCurrency);
+    updateLegend(filtered, currentCurrency);
+    currentRangeEl.textContent = currentRangeKey === 'all' ? 'All' : `${currentRangeKey}Y`;
   }
 
   document.querySelectorAll('.ranges button').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.ranges button').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      setRange(btn.dataset.range);
+      currentRangeKey = btn.dataset.range;
+      render();
+    });
+  });
+
+  document.querySelectorAll('.ccy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ccy = btn.dataset.ccy;
+      if (ccy === 'IDR' && idrRateMap.size === 0) {
+        alert('Data kurs IDR belum tersedia (build belum berhasil fetch FRED DEXINUS).');
+        return;
+      }
+      document.querySelectorAll('.ccy-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentCurrency = ccy;
+      render();
     });
   });
 
   document.getElementById('exportBtn').addEventListener('click', () => {
-    const rows = ['date,price_usd_per_oz', ...allData.map(d => `${d.date},${d.price}`)].join('\n');
+    const projected = projectData(goldData, currentCurrency);
+    const header = currentCurrency === 'USD' ? 'date,price_usd_per_oz' : 'date,price_idr_per_gram';
+    const rows = [header, ...projected.map(d => `${d.date},${d.value.toFixed(2)}`)].join('\n');
     const blob = new Blob([rows], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'gold-prices.csv';
+    a.download = `gold-prices-${currentCurrency.toLowerCase()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   });
 
   legendPriceEl.textContent = 'Loading...';
-  loadData().then(data => {
-    allData = data;
-    setRange(currentRangeKey);
+  loadAll().then(() => {
+    if (idrRateMap.size === 0) {
+      // Auto-fallback ke USD jika data IDR tidak tersedia.
+      currentCurrency = 'USD';
+      document.querySelectorAll('.ccy-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.ccy === 'USD');
+      });
+    }
+    render();
   });
 })();

@@ -50,7 +50,6 @@ window.GOLD_STATIC = [
   { date: '1967-12-31', price: 34.95 }
 ];
 
-// Di-proxy via Netlify (lihat netlify.toml) supaya bebas dari kendala CORS.
-// Untuk dev lokal tanpa Netlify CLI, fetch akan gagal dan otomatis fallback ke
-// data statis 1925-1967 saja.
-window.FRED_CSV_URL = '/api/fred-gold.csv';
+// CSV-CSV berikut di-bake saat Netlify build (lihat scripts/fetch-fred.sh):
+//   /api/fred-gold.csv  - LBMA Gold Price AM Fix (USD/oz, harian, 1968+)
+//   /api/fred-idr.csv   - Indonesian Rupiah per USD (DEXINUS, harian, 1971+)
