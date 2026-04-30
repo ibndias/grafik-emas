@@ -44,7 +44,7 @@
     <section class="card" aria-label="Grafik harga">
       <div class="chart-head">
         <span class="chart-title">Pergerakan harga</span>
-        <span class="chart-range" id="currentRange">10Y</span>
+        <span class="chart-range" id="currentRange">7D</span>
       </div>
 
       <div class="chart-wrapper">
@@ -52,14 +52,23 @@
       </div>
 
       <nav class="ranges" aria-label="Rentang waktu">
-        <button data-range="1" type="button">1Y</button>
-        <button data-range="5" type="button">5Y</button>
-        <button data-range="10" type="button" class="active">10Y</button>
-        <button data-range="25" type="button">25Y</button>
-        <button data-range="50" type="button">50Y</button>
-        <button data-range="100" type="button">100Y</button>
         <button data-range="all" type="button">All</button>
+        <button data-range="100" type="button">100Y</button>
+        <button data-range="50" type="button">50Y</button>
+        <button data-range="25" type="button">25Y</button>
+        <button data-range="10" type="button">10Y</button>
+        <button data-range="5" type="button">5Y</button>
+        <button data-range="1" type="button">1Y</button>
+        <button data-range="30d" type="button">30D</button>
+        <button data-range="10d" type="button">10D</button>
+        <button data-range="7d" type="button" class="active">7D</button>
+        <button data-range="1d" type="button">1D</button>
       </nav>
+
+      <div class="idr-notice" id="idrNotice" aria-live="polite">
+        <span class="notice-icon" aria-hidden="true">i</span>
+        <span id="idrNoticeText">Data kurs IDR tersedia mulai 1999</span>
+      </div>
     </section>
 
     <section class="actions" aria-label="Opsi">
@@ -75,13 +84,15 @@
 
     <footer class="note">
       <p>
-        <strong>Emas</strong> — Yahoo Finance <code>GC=F</code> (COMEX gold futures, harian) untuk 2000+,
-        digabung <a href="https://datahub.io/core/gold-prices" target="_blank" rel="noopener">datahub.io</a>
-        bulanan untuk pra-2000, dan harga resmi era Gold Standard / Bretton Woods.
+        <strong>Emas (USD)</strong> — data sejak 1833.
+        Yahoo Finance <code>GC=F</code> (COMEX gold futures, harian) untuk ~1995+,
+        <a href="https://datahub.io/core/gold-prices" target="_blank" rel="noopener">datahub.io</a>
+        bulanan untuk 1833–1995, dan harga resmi era Gold Standard / Bretton Woods (1925–1967).
       </p>
       <p>
-        <strong>Kurs</strong> — <a href="https://www.frankfurter.app" target="_blank" rel="noopener">frankfurter.app</a>
-        (ECB, harian sejak 1999). IDR/gram = USD/oz × kurs ÷ 31,1035. Mode IDR menampilkan data 1999+.
+        <strong>Kurs IDR</strong> — <a href="https://www.frankfurter.app" target="_blank" rel="noopener">frankfurter.app</a>
+        (ECB, harian). Data kurs hanya tersedia sejak 1999, sehingga mode IDR/gram hanya menampilkan 1999+.
+        Rumus: IDR/gram = USD/oz × kurs ÷ 31,1035.
       </p>
       <p class="build-info" id="buildInfo"></p>
     </footer>

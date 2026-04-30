@@ -9,11 +9,12 @@
   const currentRangeEl = document.getElementById('currentRange');
   const todayLabelEl = document.getElementById('todayLabel');
   const buildInfoEl = document.getElementById('buildInfo');
+  const idrNoticeEl = document.getElementById('idrNotice');
 
   let goldData = [];
   let idrRateMap = new Map();
   let chart = null;
-  let currentRangeKey = '10';
+  let currentRangeKey = '7d';
   let currentCurrency = 'IDR';
 
   const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni',
@@ -109,13 +110,20 @@
     return out;
   }
 
-  function filterByYears(data, years) {
+  function filterByRange(data, rangeKey) {
     if (!data.length) return data;
-    if (years === 'all') return data;
-    const last = new Date(data[data.length - 1].date);
-    const cutoff = new Date(last);
-    cutoff.setFullYear(cutoff.getFullYear() - parseInt(years, 10));
-    return data.filter(d => new Date(d.date) >= cutoff);
+    if (rangeKey === 'all') return data;
+    var last = new Date(data[data.length - 1].date);
+    var cutoff = new Date(last);
+    if (rangeKey.endsWith('d')) {
+      // Day-based range: "1d", "7d", "10d", "30d"
+      var days = parseInt(rangeKey, 10);
+      cutoff.setDate(cutoff.getDate() - days);
+    } else {
+      // Year-based range: "1", "5", "10", etc.
+      cutoff.setFullYear(cutoff.getFullYear() - parseInt(rangeKey, 10));
+    }
+    return data.filter(function(d) { return new Date(d.date) >= cutoff; });
   }
 
   // ---------- Formatting ----------
@@ -142,6 +150,21 @@
     const [y, m, d] = dateStr.split('-').map(Number);
     if (!y) return dateStr;
     return `${d || 15} ${MONTHS_ID[(m || 1) - 1]} ${y}`;
+  }
+
+  function formatRangeShort(key) {
+    if (key === 'all') return 'All';
+    if (key.endsWith('d')) return key.replace('d', 'D');
+    return key + 'Y';
+  }
+
+  function formatRangeLabel(key) {
+    if (key === 'all') return 'sejak 1833';
+    if (key.endsWith('d')) {
+      var days = parseInt(key, 10);
+      return days + ' hari';
+    }
+    return key + ' tahun';
   }
 
   function formatCompactIDR(v) {
@@ -192,7 +215,7 @@
     legendPriceEl.textContent = formatPrice(last.value, currency);
 
     const pctSign = pct >= 0 ? '+' : '\u2212';
-    const rangeLabel = currentRangeKey === 'all' ? 'sejak 1833' : currentRangeKey + 'Y';
+    const rangeLabel = formatRangeLabel(currentRangeKey);
     const changeText = `${formatChange(diff, currency)} (${pctSign}${Math.abs(pct).toFixed(1)}%) \u00B7 ${rangeLabel}`;
 
     // Build arrow element
@@ -316,10 +339,31 @@
 
   function render() {
     var projected = projectData(goldData, currentCurrency);
-    var filtered = filterByYears(projected, currentRangeKey);
+    var filtered = filterByRange(projected, currentRangeKey);
     buildChart(filtered, currentCurrency);
     updateLegend(filtered, currentCurrency);
-    currentRangeEl.textContent = currentRangeKey === 'all' ? 'All' : currentRangeKey + 'Y';
+    currentRangeEl.textContent = formatRangeShort(currentRangeKey);
+    updateIdrNotice(projected);
+  }
+
+  function updateIdrNotice(projected) {
+    if (!idrNoticeEl) return;
+    // Show notice when IDR mode AND the selected range would include pre-1999 data
+    // that gets truncated. We detect this by checking if gold data extends further
+    // back than the projected (IDR-converted) data.
+    var show = false;
+    if (currentCurrency === 'IDR' && goldData.length && projected.length) {
+      var goldFiltered = filterByRange(
+        goldData.map(function(d) { return { date: d.date, value: d.price }; }),
+        currentRangeKey
+      );
+      // If gold data for this range starts earlier than the IDR-projected data,
+      // it means some points were dropped due to missing IDR rates
+      if (goldFiltered.length && goldFiltered[0].date < projected[0].date) {
+        show = true;
+      }
+    }
+    idrNoticeEl.classList.toggle('visible', show);
   }
 
   // ---------- Event Handlers ----------
