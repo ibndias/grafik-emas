@@ -31,7 +31,8 @@
 
   async function fetchCSV(url) {
     try {
-      const res = await fetch(url, { cache: 'no-cache' });
+      const bust = `${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+      const res = await fetch(url + bust, { cache: 'no-store' });
       if (!res.ok) return null;
       const text = await res.text();
       const head = text.slice(0, 100).toUpperCase();
@@ -44,7 +45,7 @@
 
   async function fetchBuildInfo() {
     try {
-      const res = await fetch('/api/build-info.json', { cache: 'no-cache' });
+      const res = await fetch(`/api/build-info.json?t=${Date.now()}`, { cache: 'no-store' });
       if (!res.ok) return null;
       return await res.json();
     } catch {

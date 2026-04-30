@@ -3,6 +3,11 @@
   command = "python3 scripts/fetch-data.py"
 
 [[headers]]
+  for = "/api/*"
+  [headers.values]
+    Cache-Control = "no-store, max-age=0"
+
+[[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"

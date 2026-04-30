@@ -73,6 +73,40 @@ def write_csv(path, rows):
             w.writerow([d, f"{v:.4f}".rstrip("0").rstrip(".")])
 
 
+def read_existing(path):
+    """Return (row_count, last_date) for an existing CSV, or (0, '')."""
+    if not os.path.exists(path):
+        return 0, ""
+    try:
+        with open(path) as f:
+            lines = [ln for ln in f.read().strip().split("\n")[1:] if ln]
+        if not lines:
+            return 0, ""
+        last_date = lines[-1].split(",")[0]
+        return len(lines), last_date
+    except OSError:
+        return 0, ""
+
+
+def write_if_better(path, new_rows, label):
+    """Only overwrite if new data is at least as fresh and as complete as existing.
+    Prevents a transient upstream failure from downgrading committed daily data
+    to coarser monthly data."""
+    existing_count, existing_last = read_existing(path)
+    new_count = len(new_rows)
+    new_last = new_rows[-1][0] if new_rows else ""
+
+    if existing_count and (new_last < existing_last or new_count < existing_count):
+        print(f"  -> {os.path.basename(path)}: KEPT existing "
+              f"({existing_count} rows, last {existing_last}) — "
+              f"new fetch only had {new_count} rows / last {new_last}")
+        return False, existing_count, existing_last
+
+    write_csv(path, new_rows)
+    print(f"  -> {os.path.basename(path)}: written ({new_count} rows, last {new_last})")
+    return True, new_count, new_last
+
+
 def attempt(label, fn):
     try:
         out = fn()
@@ -110,11 +144,16 @@ elif dh_gold:
     gold_sources = [f"datahub.io monthly ({len(dh_gold)})"]
 
 if merged_gold:
-    write_csv(os.path.join(OUT_DIR, "gold.csv"), merged_gold)
-    print(f"  -> gold.csv: last={merged_gold[-1]}")
+    write_if_better(os.path.join(OUT_DIR, "gold.csv"), merged_gold, "gold")
 else:
-    print("  -> gold.csv NOT written (all sources failed)")
-    gold_sources = ["FAILED"]
+    existing_count, existing_last = read_existing(os.path.join(OUT_DIR, "gold.csv"))
+    if existing_count:
+        print(f"  -> gold.csv: KEPT existing ({existing_count} rows, last {existing_last}) "
+              f"— all fetches failed")
+        gold_sources = [f"existing committed CSV ({existing_count} rows)"]
+    else:
+        print("  -> gold.csv NOT written (no existing, all sources failed)")
+        gold_sources = ["FAILED"]
 
 
 # ---------- IDR ----------
@@ -131,20 +170,29 @@ elif idr_rows:
     idr_sources = [f"frankfurter.app ({len(idr_rows)})"]
 
 if idr_rows:
-    write_csv(os.path.join(OUT_DIR, "idr.csv"), idr_rows)
-    print(f"  -> idr.csv: last={idr_rows[-1]}")
+    write_if_better(os.path.join(OUT_DIR, "idr.csv"), idr_rows, "idr")
 else:
-    print("  -> idr.csv NOT written (all sources failed)")
-    idr_sources = ["FAILED"]
+    existing_count, existing_last = read_existing(os.path.join(OUT_DIR, "idr.csv"))
+    if existing_count:
+        print(f"  -> idr.csv: KEPT existing ({existing_count} rows, last {existing_last})")
+        idr_sources = [f"existing committed CSV ({existing_count} rows)"]
+    else:
+        print("  -> idr.csv NOT written (all sources failed)")
+        idr_sources = ["FAILED"]
 
 
 # ---------- Build info ----------
+gold_count, gold_last_date = read_existing(os.path.join(OUT_DIR, "gold.csv"))
+idr_count, idr_last_date = read_existing(os.path.join(OUT_DIR, "idr.csv"))
+
 build_info = {
     "built_at": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
     "gold_sources": gold_sources,
     "idr_sources": idr_sources,
-    "gold_last": merged_gold[-1] if merged_gold else None,
-    "idr_last": idr_rows[-1] if idr_rows else None,
+    "gold_last_date": gold_last_date,
+    "gold_rows": gold_count,
+    "idr_last_date": idr_last_date,
+    "idr_rows": idr_count,
 }
 with open(os.path.join(OUT_DIR, "build-info.json"), "w") as f:
     json.dump(build_info, f, indent=2)
