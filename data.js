@@ -51,5 +51,5 @@ window.GOLD_STATIC = [
 ];
 
 // CSV-CSV berikut di-bake saat Netlify build (lihat scripts/fetch-fred.sh):
-//   /api/fred-gold.csv  - LBMA Gold Price AM Fix (USD/oz, harian, 1968+)
-//   /api/fred-idr.csv   - Indonesian Rupiah per USD (DEXINUS, harian, 1971+)
+//   /api/gold.csv  - USD per troy ounce (FRED daily atau datahub monthly fallback)
+//   /api/idr.csv   - IDR per USD (frankfurter daily 1999+ atau FRED DEXINUS fallback)

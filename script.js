@@ -39,17 +39,20 @@
 
   async function loadAll() {
     const [goldFred, idrFred] = await Promise.all([
-      fetchCSV('/api/fred-gold.csv'),
-      fetchCSV('/api/fred-idr.csv')
+      fetchCSV('/api/gold.csv'),
+      fetchCSV('/api/idr.csv')
     ]);
 
     if (goldFred && goldFred.length) {
-      goldData = [
-        ...window.GOLD_STATIC.map(d => ({ date: d.date, price: d.price })),
-        ...goldFred.map(d => ({ date: d.date, price: d.value }))
-      ];
+      // Live data wins over static fallback when dates overlap.
+      const byDate = new Map();
+      for (const d of window.GOLD_STATIC) byDate.set(d.date, d.price);
+      for (const d of goldFred) byDate.set(d.date, d.value);
+      goldData = Array.from(byDate.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([date, price]) => ({ date, price }));
     } else {
-      console.warn('Gold FRED data unavailable; using static fallback only.');
+      console.warn('Gold live data unavailable; using static fallback only.');
       goldData = window.GOLD_STATIC.map(d => ({ date: d.date, price: d.price }));
     }
 
