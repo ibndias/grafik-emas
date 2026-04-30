@@ -1,0 +1,124 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #f5f6f8;
+  color: #222;
+}
+
+.app {
+  max-width: 1100px;
+  margin: 24px auto;
+  background: #fff;
+  border: 1px solid #e3e6eb;
+  border-radius: 6px;
+  padding: 12px 16px 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0 8px;
+  border-bottom: 1px solid #eef0f3;
+}
+
+.search {
+  flex: 0 0 200px;
+  padding: 6px 10px;
+  border: 1px solid #e3e6eb;
+  border-radius: 4px;
+  font-size: 13px;
+  background: #fafbfc;
+}
+
+.toolbar-icons {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  color: #5b6470;
+  font-size: 14px;
+}
+
+.range-label {
+  font-size: 13px;
+  color: #2c7be5;
+  font-weight: 500;
+}
+
+.icon { cursor: default; opacity: 0.75; }
+
+.toolbar-right {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.ghost {
+  background: transparent;
+  border: none;
+  color: #5b6470;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.ghost:hover { color: #222; }
+
+.legend {
+  padding: 10px 4px 4px;
+  font-size: 13px;
+}
+
+.legend-name { color: #444; margin-right: 8px; }
+.legend-price { color: #2c7be5; font-weight: 600; margin-right: 6px; }
+.legend-change { color: #d83b3b; font-weight: 500; }
+.legend-change.up { color: #1a9850; }
+
+.chart-wrapper {
+  position: relative;
+  height: 420px;
+  padding: 0 4px;
+}
+
+.ranges {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 10px 0 14px;
+  font-size: 13px;
+}
+
+.ranges button {
+  background: transparent;
+  border: none;
+  color: #5b6470;
+  cursor: pointer;
+  padding: 4px 2px;
+  font-size: 13px;
+}
+
+.ranges button:hover { color: #2c7be5; }
+
+.ranges button.active {
+  color: #2c7be5;
+  border-bottom: 2px solid #2c7be5;
+  font-weight: 500;
+}
+
+.note {
+  font-size: 11px;
+  color: #8892a0;
+  padding: 8px 4px 4px;
+  border-top: 1px solid #eef0f3;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .app { margin: 0; border-radius: 0; }
+  .search { flex: 1 1 auto; }
+  .chart-wrapper { height: 320px; }
+  .ranges { gap: 12px; }
+}

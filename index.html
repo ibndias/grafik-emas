@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grafik Harga Emas - 100 Tahun</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="toolbar">
+      <input type="text" class="search" placeholder="Search..." disabled />
+      <div class="toolbar-icons">
+        <span class="range-label" id="currentRange">10Y</span>
+        <span class="icon">📈</span>
+        <span class="icon">📅</span>
+        <span class="icon">＋</span>
+        <span class="icon">🔧</span>
+      </div>
+      <div class="toolbar-right">
+        <button class="ghost" id="exportBtn">⬇ Export</button>
+      </div>
+    </header>
+
+    <div class="legend">
+      <span class="legend-name">Gold (USD/t.oz)</span>
+      <span class="legend-price" id="legendPrice">—</span>
+      <span class="legend-change" id="legendChange">—</span>
+    </div>
+
+    <div class="chart-wrapper">
+      <canvas id="chart"></canvas>
+    </div>
+
+    <div class="ranges">
+      <button data-range="1">1Y</button>
+      <button data-range="5">5Y</button>
+      <button data-range="10" class="active">10Y</button>
+      <button data-range="25">25Y</button>
+      <button data-range="50">50Y</button>
+      <button data-range="100">100Y</button>
+      <button data-range="all">All</button>
+    </div>
+
+    <footer class="note">
+      Data: rata-rata tahunan harga emas (USD per troy ounce). Sumber publik:
+      Gold Standard / Bretton Woods (1925-1971), LBMA London PM Fix &amp;
+      World Gold Council (1972-sekarang). Nilai 2026 adalah snapshot saat ini.
+    </footer>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
