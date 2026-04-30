@@ -1,12 +1,6 @@
 [build]
   publish = "."
-  command = ""
-
-[[redirects]]
-  from = "/api/fred-gold.csv"
-  to = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=GOLDAMGBD228NLBM"
-  status = 200
-  force = true
+  command = "bash scripts/fetch-fred.sh"
 
 [[headers]]
   for = "/*"

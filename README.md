@@ -1,6 +1,8 @@
 # Grafik Emas
 
-Website grafik harga emas 100 tahun (1925–2026), data rata-rata tahunan USD/oz.
+Website grafik harga emas, data harian dari **LBMA Gold Price (AM Fix)** via FRED
+seri `GOLDAMGBD228NLBM` (1968–sekarang) plus harga resmi era Gold Standard /
+Bretton Woods (1925–1967) sebagai data statis.
 
 ## Jalan lokal
 
@@ -9,24 +11,25 @@ python3 -m http.server 8000
 # buka http://localhost:8000
 ```
 
-## Deploy ke Netlify (CI/CD via GitHub Actions)
+Lokal hanya akan menampilkan data statis 1925–1967 — file `api/fred-gold.csv`
+di-generate saat build Netlify. Untuk dev penuh, jalankan `bash scripts/fetch-fred.sh`
+sekali lalu serve.
 
-Workflow di `.github/workflows/deploy.yml` akan:
-- **Push ke `main`** → deploy production
-- **Pull request** → deploy preview + komentar URL preview di PR
+## Deploy
 
-### Setup sekali
+Site ini connected langsung ke repo via Netlify. Setiap push ke branch
+production akan trigger build:
 
-1. Buat site kosong di Netlify (web UI: *Add new site → Deploy manually*, drag folder kosong, atau pakai CLI `netlify sites:create`).
-2. Ambil dua nilai berikut:
-   - **Site ID** — di *Site settings → General → Site information → Site ID*.
-   - **Personal access token** — di *User settings → Applications → Personal access tokens → New access token*.
-3. Tambah keduanya sebagai GitHub repo secrets (*Settings → Secrets and variables → Actions → New repository secret*):
-   - `NETLIFY_SITE_ID`
-   - `NETLIFY_AUTH_TOKEN`
+1. `bash scripts/fetch-fred.sh` — fetch CSV harian dari FRED, simpan ke
+   `api/fred-gold.csv`. Kalau gagal (mis. FRED unreachable), build tetap sukses
+   dan client fallback ke data statis.
+2. Netlify publish root sebagai static site.
 
-Setelah itu, push ke `main` akan otomatis deploy.
+`netlify.toml` mengatur publish dir, build command, dan headers.
 
-## Alternatif tanpa GitHub Actions
+### Update data harian
 
-Netlify bisa langsung connect ke repo (*Add new site → Import from Git*), nggak perlu workflow file ini sama sekali. `netlify.toml` tetap dipakai untuk config publish dir dan headers.
+Build hanya jalan saat ada push. Untuk auto-update harian, bikin **build hook**
+di Netlify (*Site settings → Build & deploy → Build hooks*) lalu trigger via
+cron eksternal (cron-job.org / GitHub Actions schedule) yang `curl -X POST` ke
+URL build hook tiap pagi.
