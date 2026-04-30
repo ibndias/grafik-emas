@@ -1,5 +1,18 @@
 {
-  "built_at": "2026-04-30T10:13:48Z",
-  "gold_source": "datahub.io gold-prices (monthly)",
-  "idr_source": "frankfurter.app (daily, ECB)"
+  "built_at": "2026-04-30T13:51:45Z",
+  "gold_sources": [
+    "Yahoo GC=F daily (6440)",
+    "datahub.io monthly pre-2000 (2012)"
+  ],
+  "idr_sources": [
+    "frankfurter.app (6995)"
+  ],
+  "gold_last": [
+    "2026-04-30",
+    4635.89990234375
+  ],
+  "idr_last": [
+    "2026-04-29",
+    17348.0
+  ]
 }

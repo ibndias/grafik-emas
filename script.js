@@ -5,6 +5,8 @@
   const legendChangeEl = document.getElementById('legendChange');
   const legendUnitEl = document.getElementById('legendUnit');
   const currentRangeEl = document.getElementById('currentRange');
+  const todayLabelEl = document.getElementById('todayLabel');
+  const buildInfoEl = document.getElementById('buildInfo');
 
   let goldData = [];
   let idrRateMap = new Map();
@@ -12,7 +14,10 @@
   let currentRangeKey = '10';
   let currentCurrency = 'IDR';
 
-  function parseFredCSV(text) {
+  const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni',
+                     'Juli','Agustus','September','Oktober','November','Desember'];
+
+  function parseCSV(text) {
     const lines = text.trim().split('\n');
     const out = [];
     for (let i = 1; i < lines.length; i++) {
@@ -31,23 +36,33 @@
       const text = await res.text();
       const head = text.slice(0, 100).toUpperCase();
       if (!head.includes('DATE')) return null;
-      return parseFredCSV(text);
+      return parseCSV(text);
+    } catch {
+      return null;
+    }
+  }
+
+  async function fetchBuildInfo() {
+    try {
+      const res = await fetch('/api/build-info.json', { cache: 'no-cache' });
+      if (!res.ok) return null;
+      return await res.json();
     } catch {
       return null;
     }
   }
 
   async function loadAll() {
-    const [goldFred, idrFred] = await Promise.all([
+    const [gold, idr, buildInfo] = await Promise.all([
       fetchCSV('/api/gold.csv'),
-      fetchCSV('/api/idr.csv')
+      fetchCSV('/api/idr.csv'),
+      fetchBuildInfo()
     ]);
 
-    if (goldFred && goldFred.length) {
-      // Live data wins over static fallback when dates overlap.
+    if (gold && gold.length) {
       const byDate = new Map();
       for (const d of window.GOLD_STATIC) byDate.set(d.date, d.price);
-      for (const d of goldFred) byDate.set(d.date, d.value);
+      for (const d of gold) byDate.set(d.date, d.value);
       goldData = Array.from(byDate.entries())
         .sort((a, b) => a[0].localeCompare(b[0]))
         .map(([date, price]) => ({ date, price }));
@@ -56,24 +71,17 @@
       goldData = window.GOLD_STATIC.map(d => ({ date: d.date, price: d.price }));
     }
 
-    if (idrFred && idrFred.length) {
-      // Forward-fill rates so weekend/holiday gold prices still get a rate.
-      let lastRate = null;
-      const sorted = idrFred.slice().sort((a, b) => a.date.localeCompare(b.date));
-      for (const r of sorted) {
-        lastRate = r.value;
-        idrRateMap.set(r.date, lastRate);
-      }
-    } else {
-      console.warn('IDR FRED data unavailable; IDR mode will be disabled.');
+    if (idr && idr.length) {
+      for (const r of idr) idrRateMap.set(r.date, r.value);
     }
+
+    return buildInfo;
   }
 
   function nearestIdrRate(dateStr) {
     if (idrRateMap.has(dateStr)) return idrRateMap.get(dateStr);
-    // Walk back up to ~10 days to find nearest prior trading day rate.
     const d = new Date(dateStr);
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 14; i++) {
       d.setDate(d.getDate() - 1);
       const key = d.toISOString().slice(0, 10);
       if (idrRateMap.has(key)) return idrRateMap.get(key);
@@ -82,10 +90,7 @@
   }
 
   function projectData(data, currency) {
-    if (currency === 'USD') {
-      return data.map(d => ({ date: d.date, value: d.price }));
-    }
-    // IDR mode: convert USD/oz to IDR/gram. Skip rows without a rate (pre-1971).
+    if (currency === 'USD') return data.map(d => ({ date: d.date, value: d.price }));
     const out = [];
     for (const d of data) {
       const rate = nearestIdrRate(d.date);
@@ -106,13 +111,36 @@
 
   function formatPrice(v, currency) {
     if (currency === 'USD') {
-      return v.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      return '$' + v.toLocaleString('en-US', {
+        minimumFractionDigits: 0, maximumFractionDigits: 2
+      });
     }
-    return 'Rp ' + Math.round(v).toLocaleString('id-ID');
+    return 'Rp ' + Math.round(v).toLocaleString('id-ID');
+  }
+
+  function formatChange(diff, currency) {
+    const sign = diff >= 0 ? '+' : '−';
+    const abs = Math.abs(diff);
+    if (currency === 'USD') {
+      return `${sign}$${abs.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+    }
+    return `${sign}Rp ${Math.round(abs).toLocaleString('id-ID')}`;
+  }
+
+  function formatDateLong(dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    if (!y) return dateStr;
+    return `${d || 15} ${MONTHS_ID[(m || 1) - 1]} ${y}`;
+  }
+
+  function setTodayLabel() {
+    if (!todayLabelEl || !goldData.length) return;
+    const lastDate = goldData[goldData.length - 1].date;
+    todayLabelEl.textContent = formatDateLong(lastDate);
   }
 
   function updateLegend(filtered, currency) {
-    legendUnitEl.textContent = currency === 'USD' ? 'Gold · USD / oz' : 'Gold · IDR / gram';
+    legendUnitEl.textContent = currency === 'USD' ? 'USD / oz' : 'IDR / gram';
     if (!filtered.length) {
       legendPriceEl.textContent = '—';
       legendChangeEl.textContent = '—';
@@ -127,23 +155,28 @@
     const first = filtered[0];
     const diff = last.value - first.value;
     const pct = (diff / first.value) * 100;
-    const sign = diff >= 0 ? '+' : '';
     legendPriceEl.textContent = formatPrice(last.value, currency);
-    const diffStr = currency === 'USD'
-      ? `${sign}${diff.toFixed(1)}`
-      : `${sign}Rp ${Math.round(diff).toLocaleString('id-ID')}`;
-    legendChangeEl.textContent = `${diffStr} (${sign}${pct.toFixed(1)}%)`;
+    const pctSign = pct >= 0 ? '+' : '−';
+    legendChangeEl.textContent =
+      `${formatChange(diff, currency)} (${pctSign}${Math.abs(pct).toFixed(1)}%) · ${currentRangeKey === 'all' ? 'sejak 1833' : currentRangeKey + ' tahun'}`;
     legendChangeEl.classList.toggle('up', diff >= 0);
   }
 
   function buildChart(filtered, currency) {
     if (chart) chart.destroy();
     const css = getComputedStyle(document.documentElement);
-    const lineColor = css.getPropertyValue('--line').trim() || '#2C5F8D';
+    const lineColor = css.getPropertyValue('--line').trim() || '#1A1915';
+    const accent = css.getPropertyValue('--accent').trim() || '#C2724D';
     const inkSoft = css.getPropertyValue('--ink-soft').trim() || '#4A4A45';
     const muted = css.getPropertyValue('--muted').trim() || '#8A8A82';
-    const ruleSoft = css.getPropertyValue('--rule-soft').trim() || '#F0EEE6';
+    const ruleSoft = css.getPropertyValue('--rule-soft').trim() || '#EFECE3';
     const card = css.getPropertyValue('--card').trim() || '#FFFFFF';
+
+    // Subtle area fill: vertical gradient from accent-tinted to transparent.
+    const canvasEl = ctx.canvas;
+    const grad = ctx.createLinearGradient(0, 0, 0, canvasEl.clientHeight || 320);
+    grad.addColorStop(0, 'rgba(194, 114, 77, 0.14)');
+    grad.addColorStop(1, 'rgba(194, 114, 77, 0)');
 
     chart = new Chart(ctx, {
       type: 'line',
@@ -152,15 +185,15 @@
         datasets: [{
           data: filtered.map(d => d.value),
           borderColor: lineColor,
-          backgroundColor: lineColor,
-          borderWidth: 1.4,
+          backgroundColor: grad,
+          borderWidth: 1.5,
           pointRadius: 0,
           pointHoverRadius: 4,
-          pointHoverBackgroundColor: lineColor,
+          pointHoverBackgroundColor: accent,
           pointHoverBorderColor: card,
           pointHoverBorderWidth: 2,
-          tension: 0.18,
-          fill: false
+          tension: 0.2,
+          fill: true
         }]
       },
       options: {
@@ -168,27 +201,27 @@
         maintainAspectRatio: false,
         animation: false,
         interaction: { mode: 'index', intersect: false },
-        layout: { padding: { top: 8, right: 4, bottom: 0, left: 4 } },
+        layout: { padding: { top: 12, right: 4, bottom: 4, left: 4 } },
         plugins: {
           legend: { display: false },
           tooltip: {
             backgroundColor: card,
             titleColor: inkSoft,
             bodyColor: lineColor,
-            titleFont: { family: 'Inter, system-ui, sans-serif', size: 12, weight: '500' },
+            titleFont: { family: 'Inter, system-ui, sans-serif', size: 11, weight: '500' },
             bodyFont: { family: 'Source Serif 4, Georgia, serif', size: 14, weight: '500' },
             borderColor: ruleSoft,
             borderWidth: 1,
             displayColors: false,
             padding: { top: 8, bottom: 8, left: 12, right: 12 },
-            cornerRadius: 6,
-            caretPadding: 8,
+            cornerRadius: 8,
+            caretPadding: 10,
             callbacks: {
-              title: items => items[0].label,
+              title: items => formatDateLong(items[0].label),
               label: item => {
                 const v = item.parsed.y;
                 if (currency === 'USD') {
-                  return `USD ${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / oz`;
+                  return `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / oz`;
                 }
                 return `Rp ${Math.round(v).toLocaleString('id-ID')} / gram`;
               }
@@ -219,9 +252,9 @@
               color: muted,
               font: { family: 'Inter, system-ui, sans-serif', size: 11 },
               padding: 8,
-              maxTicksLimit: 6,
+              maxTicksLimit: 5,
               callback: v => currency === 'USD'
-                ? v.toLocaleString('en-US')
+                ? formatCompactUSD(v)
                 : formatCompactIDR(v)
             },
             border: { display: false }
@@ -235,6 +268,11 @@
     if (v >= 1_000_000) return (v / 1_000_000).toFixed(v >= 10_000_000 ? 1 : 2) + ' jt';
     if (v >= 1_000) return Math.round(v / 1_000) + ' rb';
     return Math.round(v).toLocaleString('id-ID');
+  }
+
+  function formatCompactUSD(v) {
+    if (v >= 1000) return '$' + (v / 1000).toFixed(v >= 10000 ? 1 : 2) + 'k';
+    return '$' + Math.round(v).toLocaleString('en-US');
   }
 
   function render() {
@@ -258,7 +296,7 @@
     btn.addEventListener('click', () => {
       const ccy = btn.dataset.ccy;
       if (ccy === 'IDR' && idrRateMap.size === 0) {
-        alert('Data kurs IDR belum tersedia (build belum berhasil fetch FRED DEXINUS).');
+        alert('Data kurs IDR belum tersedia (build gagal fetch frankfurter.app).');
         return;
       }
       document.querySelectorAll('.ccy-btn').forEach(b => b.classList.remove('active'));
@@ -276,20 +314,25 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `gold-prices-${currentCurrency.toLowerCase()}.csv`;
+    a.download = `harga-emas-${currentCurrency.toLowerCase()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   });
 
-  legendPriceEl.textContent = 'Loading...';
-  loadAll().then(() => {
+  legendPriceEl.textContent = 'Loading…';
+  loadAll().then((buildInfo) => {
     if (idrRateMap.size === 0) {
-      // Auto-fallback ke USD jika data IDR tidak tersedia.
       currentCurrency = 'USD';
       document.querySelectorAll('.ccy-btn').forEach(b => {
         b.classList.toggle('active', b.dataset.ccy === 'USD');
       });
     }
+    setTodayLabel();
     render();
+
+    if (buildInfoEl && buildInfo) {
+      const built = (buildInfo.built_at || '').slice(0, 10);
+      buildInfoEl.textContent = `Data terakhir diperbarui ${built}`;
+    }
   });
 })();

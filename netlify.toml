@@ -1,6 +1,6 @@
 [build]
   publish = "."
-  command = "bash scripts/fetch-fred.sh"
+  command = "python3 scripts/fetch-data.py"
 
 [[headers]]
   for = "/*"

@@ -1,19 +1,21 @@
 :root {
-  --bg: #F5F4ED;
+  --bg: #F4F1EA;
+  --bg-soft: #EDE9DF;
   --card: #FFFFFF;
-  --ink: #1F1F1C;
+  --ink: #1A1915;
   --ink-soft: #4A4A45;
   --muted: #8A8A82;
-  --rule: #E8E6DD;
-  --rule-soft: #F0EEE6;
-  --accent: #CC785C;
-  --accent-soft: rgba(204, 120, 92, 0.08);
-  --line: #2C5F8D;
-  --up: #4A7C59;
+  --rule: #E5E1D6;
+  --rule-soft: #EFECE3;
+  --accent: #C2724D;
+  --accent-soft: rgba(194, 114, 77, 0.08);
+  --line: #1A1915;
+  --line-fill: rgba(194, 114, 77, 0.08);
+  --up: #5C7A50;
   --down: #B85450;
-  --serif: "Source Serif 4", "Source Serif Pro", "Iowan Old Style", "Apple Garamond", Georgia, serif;
-  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --serif: "Source Serif 4", "Source Serif Pro", "Iowan Old Style", "Charter", "Apple Garamond", Georgia, "Times New Roman", serif;
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
 
 * { box-sizing: border-box; }
@@ -25,7 +27,7 @@ html, body {
   color: var(--ink);
   font-family: var(--sans);
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -34,7 +36,7 @@ html, body {
 a {
   color: var(--accent);
   text-decoration: none;
-  border-bottom: 1px solid rgba(204, 120, 92, 0.3);
+  border-bottom: 1px solid rgba(194, 114, 77, 0.3);
   transition: border-color 0.15s ease;
 }
 a:hover { border-bottom-color: var(--accent); }
@@ -48,119 +50,170 @@ code {
   color: var(--ink-soft);
 }
 
+button {
+  font-family: var(--sans);
+  font-feature-settings: "tnum";
+}
+
 .page {
-  max-width: 720px;
+  max-width: 680px;
   margin: 0 auto;
-  padding: 48px 24px 64px;
+  padding: 56px 24px 64px;
 }
 
 /* ---------- Masthead ---------- */
 .masthead {
-  margin-bottom: 32px;
+  margin-bottom: 36px;
 }
 
 .kicker {
-  margin: 0 0 10px;
+  margin: 0 0 14px;
   font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--accent);
 }
 
 .masthead h1 {
-  margin: 0 0 12px;
+  margin: 0;
   font-family: var(--serif);
   font-weight: 500;
-  font-size: 44px;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
+  font-size: 52px;
+  line-height: 1;
+  letter-spacing: -0.02em;
   color: var(--ink);
 }
 
-.lede {
-  margin: 0;
-  font-size: 16px;
+/* ---------- Hero (today's price) ---------- */
+.hero {
+  margin-bottom: 40px;
+  padding-bottom: 36px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 18px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
   color: var(--ink-soft);
-  max-width: 56ch;
+}
+
+.hero-eyebrow .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+  display: inline-block;
+}
+
+.hero-price-line {
+  margin: 0 0 12px;
+  line-height: 1;
+}
+
+.hero-price {
+  font-family: var(--serif);
+  font-size: 64px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  font-feature-settings: "tnum";
+  line-height: 1;
+  display: inline-block;
+}
+
+.hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 14px;
+  flex-wrap: wrap;
+}
+
+.hero-unit {
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.hero-sep { color: var(--rule); }
+
+.hero-change {
+  font-weight: 600;
+  color: var(--down);
+  font-feature-settings: "tnum";
+}
+.hero-change.up { color: var(--up); }
+.hero-change::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid currentColor;
+  margin-right: 6px;
+  vertical-align: middle;
+  transform: translateY(-1px);
+}
+.hero-change.up::before {
+  border-top: none;
+  border-bottom: 5px solid currentColor;
 }
 
 /* ---------- Card ---------- */
 .card {
   background: var(--card);
   border: 1px solid var(--rule);
-  border-radius: 12px;
-  padding: 28px 28px 20px;
-  box-shadow: 0 1px 2px rgba(31, 31, 28, 0.03);
+  border-radius: 14px;
+  padding: 22px 22px 14px;
+  box-shadow: 0 1px 3px rgba(26, 25, 21, 0.04);
 }
 
-/* ---------- Hero (price block) ---------- */
-.hero {
-  margin-bottom: 24px;
-}
-
-.hero-meta {
+.chart-head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  padding: 0 4px;
 }
 
-.hero-label {
+.chart-title {
   font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: var(--muted);
 }
 
-.hero-range {
+.chart-range {
   font-family: var(--serif);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--accent);
   font-feature-settings: "tnum";
 }
 
-.hero-price-row {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.hero-price {
-  font-family: var(--serif);
-  font-size: 38px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-  font-feature-settings: "tnum";
-  line-height: 1.1;
-}
-
-.hero-change {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--down);
-  font-feature-settings: "tnum";
-}
-.hero-change.up { color: var(--up); }
-
-/* ---------- Chart ---------- */
 .chart-wrapper {
   position: relative;
-  height: 360px;
-  margin: 0 -8px 16px;
+  height: 320px;
+  margin: 0 -8px 14px;
 }
 
 /* ---------- Range tabs ---------- */
 .ranges {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   padding: 4px;
   background: var(--rule-soft);
-  border-radius: 8px;
+  border-radius: 10px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -172,72 +225,69 @@ code {
   background: transparent;
   border: none;
   color: var(--ink-soft);
-  font-family: var(--sans);
   font-size: 13px;
-  font-weight: 500;
-  padding: 8px 4px;
-  border-radius: 6px;
+  font-weight: 600;
+  padding: 9px 6px;
+  border-radius: 7px;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
-  font-feature-settings: "tnum";
 }
 .ranges button:hover { color: var(--ink); }
 .ranges button.active {
   background: var(--card);
   color: var(--ink);
-  box-shadow: 0 1px 2px rgba(31, 31, 28, 0.06);
+  box-shadow: 0 1px 2px rgba(26, 25, 21, 0.08);
 }
 
-/* ---------- Controls ---------- */
-.controls {
+/* ---------- Actions row ---------- */
+.actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid var(--rule-soft);
+  margin-top: 16px;
+  padding: 16px 4px 0;
 }
 
 .ccy-toggle {
   display: inline-flex;
-  background: var(--rule-soft);
-  border-radius: 8px;
+  background: var(--bg-soft);
+  border-radius: 10px;
   padding: 3px;
+  border: 1px solid var(--rule);
 }
 
 .ccy-btn {
   background: transparent;
   border: none;
   color: var(--ink-soft);
-  font-family: var(--sans);
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  padding: 7px 14px;
-  border-radius: 6px;
+  letter-spacing: 0.02em;
+  padding: 8px 14px;
+  border-radius: 7px;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
 }
 .ccy-btn:hover { color: var(--ink); }
 .ccy-btn.active {
   background: var(--card);
   color: var(--ink);
-  box-shadow: 0 1px 2px rgba(31, 31, 28, 0.08);
+  box-shadow: 0 1px 2px rgba(26, 25, 21, 0.08);
 }
 
 .export {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: transparent;
+  background: var(--card);
   border: 1px solid var(--rule);
   color: var(--ink-soft);
-  font-family: var(--sans);
   font-size: 13px;
   font-weight: 500;
-  padding: 7px 14px;
-  border-radius: 8px;
+  padding: 8px 14px;
+  border-radius: 9px;
   cursor: pointer;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
@@ -246,12 +296,12 @@ code {
 
 /* ---------- Note (footer) ---------- */
 .note {
-  margin-top: 28px;
+  margin-top: 36px;
   padding: 0 4px;
 }
 
 .note p {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   font-size: 13px;
   line-height: 1.65;
   color: var(--muted);
@@ -262,45 +312,62 @@ code {
   font-weight: 600;
 }
 
+.build-info {
+  margin-top: 18px !important;
+  font-size: 11px !important;
+  font-family: var(--mono);
+  color: var(--rule) !important;
+}
+
 /* ---------- Mobile ---------- */
 @media (max-width: 640px) {
-  .page { padding: 28px 16px 48px; }
+  .page { padding: 32px 18px 48px; }
 
-  .masthead { margin-bottom: 24px; }
-  .masthead h1 { font-size: 34px; }
-  .lede { font-size: 15px; }
+  .masthead { margin-bottom: 28px; }
+  .masthead h1 { font-size: 40px; }
 
-  .card {
-    padding: 20px 18px 16px;
-    border-radius: 10px;
-    margin: 0 -4px;
+  .hero {
+    margin-bottom: 28px;
+    padding-bottom: 26px;
   }
 
-  .hero-price { font-size: 30px; }
-  .hero-change { font-size: 13px; }
+  .hero-eyebrow { margin-bottom: 14px; }
+  .hero-price { font-size: 48px; letter-spacing: -0.02em; }
+  .hero-meta { font-size: 13px; }
+
+  .card {
+    padding: 18px 16px 12px;
+    border-radius: 12px;
+  }
 
   .chart-wrapper {
-    height: 300px;
-    margin: 0 -10px 12px;
+    height: 280px;
+    margin: 0 -8px 12px;
   }
 
   .ranges button {
     min-width: 40px;
     font-size: 12px;
-    padding: 8px 2px;
+    padding: 9px 2px;
   }
 
-  .controls {
-    flex-direction: row;
-    align-items: center;
+  .actions {
+    margin-top: 14px;
+    padding: 14px 0 0;
   }
 
-  .ccy-btn { padding: 7px 12px; font-size: 11px; }
-  .export { padding: 7px 12px; font-size: 12px; }
+  .ccy-btn { padding: 8px 11px; font-size: 11px; }
+  .export { padding: 8px 12px; font-size: 12px; }
+  .export span { display: none; }
+  .export { padding: 8px 10px; }
 }
 
 @media (max-width: 380px) {
-  .hero-price { font-size: 26px; }
-  .masthead h1 { font-size: 30px; }
+  .masthead h1 { font-size: 34px; }
+  .hero-price { font-size: 40px; }
   .ranges button { font-size: 11px; min-width: 36px; }
+}
+
+@media (prefers-color-scheme: dark) {
+  /* Keep light theme by default — explicit dark not implemented yet. */
 }
