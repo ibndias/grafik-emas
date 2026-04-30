@@ -2,8 +2,8 @@
 // 1925-1933: Gold Standard, USD 20.67/oz.
 // 1933-1934: devaluasi (Gold Reserve Act).
 // 1934-1967: Bretton Woods, USD 35/oz.
-// Dari 1968 ke atas: di-fetch live dari FRED seri GOLDAMGBD228NLBM
-// (LBMA Gold Price - AM Fix, USD per troy ounce, harian).
+// Dari 1968 ke atas: di-fetch live via Yahoo Finance GC=F (COMEX gold futures, harian)
+// dan datahub.io (bulanan, pra-2000). Lihat scripts/fetch-data.py.
 window.GOLD_STATIC = [
   { date: '1925-12-31', price: 20.67 },
   { date: '1926-12-31', price: 20.67 },
@@ -50,6 +50,6 @@ window.GOLD_STATIC = [
   { date: '1967-12-31', price: 34.95 }
 ];
 
-// CSV-CSV berikut di-bake saat Netlify build (lihat scripts/fetch-fred.sh):
-//   /api/gold.csv  - USD per troy ounce (FRED daily atau datahub monthly fallback)
-//   /api/idr.csv   - IDR per USD (frankfurter daily 1999+ atau FRED DEXINUS fallback)
+// CSV-CSV berikut di-bake saat Netlify build (lihat scripts/fetch-data.py):
+//   /api/gold.csv  - USD per troy ounce (Yahoo Finance daily + datahub monthly fallback)
+//   /api/idr.csv   - IDR per USD (frankfurter.app daily 1999+ atau Yahoo IDR=X fallback)

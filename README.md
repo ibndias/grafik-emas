@@ -1,31 +1,68 @@
 # Grafik Emas
 
-Website grafik harga emas, data harian dari **LBMA Gold Price (AM Fix)** via FRED
-seri `GOLDAMGBD228NLBM` (1968–sekarang) plus harga resmi era Gold Standard /
-Bretton Woods (1925–1967) sebagai data statis.
+Grafik historis harga emas dunia — IDR per gram dan USD per troy ounce.
 
-## Jalan lokal
+Data dari 1833 (era Gold Standard) hingga hari ini, di-render sebagai static site tanpa backend.
+
+## Stack
+
+- **Frontend**: Vanilla HTML/CSS/JS + Chart.js 4.x
+- **Data build**: Python 3 (`scripts/fetch-data.py`) — dijalankan saat Netlify build
+- **Deploy**: Netlify (static)
+
+## Sumber Data
+
+| Seri | Sumber | Rentang |
+|------|--------|---------|
+| Emas (harian) | Yahoo Finance `GC=F` (COMEX gold futures) | ~1995–sekarang |
+| Emas (bulanan) | [datahub.io](https://datahub.io/core/gold-prices) | 1833–~2020 |
+| Emas (statis) | `data.js` — harga resmi Gold Standard & Bretton Woods | 1925–1967 |
+| Kurs USD/IDR | [frankfurter.app](https://www.frankfurter.app) (ECB) | 1999–sekarang |
+
+## Develop Lokal
 
 ```bash
-python3 -m http.server 8000
-# buka http://localhost:8000
+python3 scripts/fetch-data.py   # fetch data terbaru ke api/
+npx serve .                     # atau python3 -m http.server
 ```
 
-Lokal hanya akan menampilkan data statis 1925–1967 — file `api/fred-gold.csv`
-di-generate saat build Netlify. Untuk dev penuh, jalankan `bash scripts/fetch-fred.sh`
-sekali lalu serve.
+Lokal tanpa fetch tetap bisa jalan — file CSV di `api/` sudah committed ke repo
+sebagai fallback.
+
+## Struktur
+
+```
+├── index.html          # Single-page UI
+├── style.css           # Mobile-first CSS, dark mode support
+├── script.js           # Client runtime (data merge, chart, events)
+├── data.js             # Static gold prices 1925–1967
+├── netlify.toml        # Build + header config
+├── scripts/
+│   └── fetch-data.py   # Build-time data fetcher
+└── api/
+    ├── gold.csv        # Gold USD/oz (committed + refreshed on build)
+    ├── idr.csv         # USD/IDR rate (committed + refreshed on build)
+    └── build-info.json # Build metadata (timestamp, sources)
+```
+
+## Fitur
+
+- Mode IDR/gram dan USD/oz
+- Rentang 1Y, 5Y, 10Y, 25Y, 50Y, 100Y, All
+- Dark mode otomatis (prefers-color-scheme)
+- Mobile-first responsive design
+- Export CSV
+- Loading skeleton
+- Accessibility (ARIA, focus-visible, reduced-motion)
 
 ## Deploy
 
-Site ini connected langsung ke repo via Netlify. Setiap push ke branch
-production akan trigger build:
+Site connected langsung ke repo via Netlify. Setiap push ke branch
+production trigger build:
 
-1. `bash scripts/fetch-fred.sh` — fetch CSV harian dari FRED, simpan ke
-   `api/fred-gold.csv`. Kalau gagal (mis. FRED unreachable), build tetap sukses
-   dan client fallback ke data statis.
+1. `python3 scripts/fetch-data.py` — fetch gold CSV + IDR rates. Kalau gagal,
+   build tetap sukses (exit 0) dan client pakai data committed.
 2. Netlify publish root sebagai static site.
-
-`netlify.toml` mengatur publish dir, build command, dan headers.
 
 ### Update data harian
 

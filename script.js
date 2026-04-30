@@ -1,4 +1,6 @@
 (function () {
+  'use strict';
+
   const OZ_TO_GRAM = 31.1034768;
   const ctx = document.getElementById('chart').getContext('2d');
   const legendPriceEl = document.getElementById('legendPrice');
@@ -16,6 +18,8 @@
 
   const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni',
                      'Juli','Agustus','September','Oktober','November','Desember'];
+
+  // ---------- CSV Parsing ----------
 
   function parseCSV(text) {
     const lines = text.trim().split('\n');
@@ -53,6 +57,8 @@
     }
   }
 
+  // ---------- Data Loading ----------
+
   async function loadAll() {
     const [gold, idr, buildInfo] = await Promise.all([
       fetchCSV('/api/gold.csv'),
@@ -78,6 +84,8 @@
 
     return buildInfo;
   }
+
+  // ---------- Data Projection ----------
 
   function nearestIdrRate(dateStr) {
     if (idrRateMap.has(dateStr)) return idrRateMap.get(dateStr);
@@ -110,22 +118,24 @@
     return data.filter(d => new Date(d.date) >= cutoff);
   }
 
+  // ---------- Formatting ----------
+
   function formatPrice(v, currency) {
     if (currency === 'USD') {
       return '$' + v.toLocaleString('en-US', {
         minimumFractionDigits: 0, maximumFractionDigits: 2
       });
     }
-    return 'Rp ' + Math.round(v).toLocaleString('id-ID');
+    return 'Rp ' + Math.round(v).toLocaleString('id-ID');
   }
 
   function formatChange(diff, currency) {
-    const sign = diff >= 0 ? '+' : '−';
+    const sign = diff >= 0 ? '+' : '\u2212';
     const abs = Math.abs(diff);
     if (currency === 'USD') {
       return `${sign}$${abs.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
     }
-    return `${sign}Rp ${Math.round(abs).toLocaleString('id-ID')}`;
+    return `${sign}Rp ${Math.round(abs).toLocaleString('id-ID')}`;
   }
 
   function formatDateLong(dateStr) {
@@ -133,6 +143,20 @@
     if (!y) return dateStr;
     return `${d || 15} ${MONTHS_ID[(m || 1) - 1]} ${y}`;
   }
+
+  function formatCompactIDR(v) {
+    if (v >= 1_000_000_000) return (v / 1_000_000_000).toFixed(1) + ' M';
+    if (v >= 1_000_000) return (v / 1_000_000).toFixed(v >= 10_000_000 ? 1 : 2) + ' jt';
+    if (v >= 1_000) return Math.round(v / 1_000) + ' rb';
+    return Math.round(v).toLocaleString('id-ID');
+  }
+
+  function formatCompactUSD(v) {
+    if (v >= 1000) return '$' + (v / 1000).toFixed(v >= 10000 ? 1 : 2) + 'k';
+    return '$' + Math.round(v).toLocaleString('en-US');
+  }
+
+  // ---------- UI Updates ----------
 
   function setTodayLabel() {
     if (!todayLabelEl || !goldData.length) return;
@@ -142,29 +166,52 @@
 
   function updateLegend(filtered, currency) {
     legendUnitEl.textContent = currency === 'USD' ? 'USD / oz' : 'IDR / gram';
+
+    // Clear existing children
+    while (legendChangeEl.firstChild) legendChangeEl.removeChild(legendChangeEl.firstChild);
+
     if (!filtered.length) {
-      legendPriceEl.textContent = '—';
-      legendChangeEl.textContent = '—';
+      legendPriceEl.textContent = '\u2014';
+      legendChangeEl.textContent = '\u2014';
+      legendChangeEl.className = 'hero-change neutral';
       return;
     }
+
     if (filtered.length < 2) {
       legendPriceEl.textContent = formatPrice(filtered[0].value, currency);
-      legendChangeEl.textContent = '—';
+      legendChangeEl.textContent = '';
+      legendChangeEl.className = 'hero-change neutral';
       return;
     }
+
     const last = filtered[filtered.length - 1];
     const first = filtered[0];
     const diff = last.value - first.value;
     const pct = (diff / first.value) * 100;
+
     legendPriceEl.textContent = formatPrice(last.value, currency);
-    const pctSign = pct >= 0 ? '+' : '−';
-    legendChangeEl.textContent =
-      `${formatChange(diff, currency)} (${pctSign}${Math.abs(pct).toFixed(1)}%) · ${currentRangeKey === 'all' ? 'sejak 1833' : currentRangeKey + ' tahun'}`;
-    legendChangeEl.classList.toggle('up', diff >= 0);
+
+    const pctSign = pct >= 0 ? '+' : '\u2212';
+    const rangeLabel = currentRangeKey === 'all' ? 'sejak 1833' : currentRangeKey + 'Y';
+    const changeText = `${formatChange(diff, currency)} (${pctSign}${Math.abs(pct).toFixed(1)}%) \u00B7 ${rangeLabel}`;
+
+    // Build arrow element
+    const arrow = document.createElement('span');
+    arrow.className = 'arrow';
+    arrow.setAttribute('aria-hidden', 'true');
+    legendChangeEl.appendChild(arrow);
+
+    // Append text
+    legendChangeEl.appendChild(document.createTextNode(changeText));
+
+    legendChangeEl.className = 'hero-change' + (diff >= 0 ? ' up' : '');
   }
+
+  // ---------- Chart ----------
 
   function buildChart(filtered, currency) {
     if (chart) chart.destroy();
+
     const css = getComputedStyle(document.documentElement);
     const lineColor = css.getPropertyValue('--line').trim() || '#1A1915';
     const accent = css.getPropertyValue('--accent').trim() || '#C2724D';
@@ -173,11 +220,10 @@
     const ruleSoft = css.getPropertyValue('--rule-soft').trim() || '#EFECE3';
     const card = css.getPropertyValue('--card').trim() || '#FFFFFF';
 
-    // Subtle area fill: vertical gradient from accent-tinted to transparent.
     const canvasEl = ctx.canvas;
-    const grad = ctx.createLinearGradient(0, 0, 0, canvasEl.clientHeight || 320);
-    grad.addColorStop(0, 'rgba(194, 114, 77, 0.14)');
-    grad.addColorStop(1, 'rgba(194, 114, 77, 0)');
+    const grad = ctx.createLinearGradient(0, 0, 0, canvasEl.clientHeight || 260);
+    grad.addColorStop(0, css.getPropertyValue('--line-fill-top').trim() || 'rgba(194, 114, 77, 0.14)');
+    grad.addColorStop(1, css.getPropertyValue('--line-fill-bottom').trim() || 'rgba(194, 114, 77, 0)');
 
     chart = new Chart(ctx, {
       type: 'line',
@@ -189,7 +235,7 @@
           backgroundColor: grad,
           borderWidth: 1.5,
           pointRadius: 0,
-          pointHoverRadius: 4,
+          pointHoverRadius: 5,
           pointHoverBackgroundColor: accent,
           pointHoverBorderColor: card,
           pointHoverBorderWidth: 2,
@@ -200,12 +246,13 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        animation: false,
+        animation: { duration: 400, easing: 'easeOutCubic' },
         interaction: { mode: 'index', intersect: false },
         layout: { padding: { top: 12, right: 4, bottom: 4, left: 4 } },
         plugins: {
           legend: { display: false },
           tooltip: {
+            enabled: true,
             backgroundColor: card,
             titleColor: inkSoft,
             bodyColor: lineColor,
@@ -218,13 +265,13 @@
             cornerRadius: 8,
             caretPadding: 10,
             callbacks: {
-              title: items => formatDateLong(items[0].label),
-              label: item => {
-                const v = item.parsed.y;
+              title: function(items) { return formatDateLong(items[0].label); },
+              label: function(item) {
+                var v = item.parsed.y;
                 if (currency === 'USD') {
-                  return `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / oz`;
+                  return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' / oz';
                 }
-                return `Rp ${Math.round(v).toLocaleString('id-ID')} / gram`;
+                return 'Rp ' + Math.round(v).toLocaleString('id-ID') + ' / gram';
               }
             }
           }
@@ -234,14 +281,14 @@
             grid: { display: false },
             ticks: {
               color: muted,
-              font: { family: 'Inter, system-ui, sans-serif', size: 11 },
+              font: { family: 'Inter, system-ui, sans-serif', size: 10 },
               maxRotation: 0,
               autoSkip: true,
-              maxTicksLimit: 6,
-              padding: 8,
+              maxTicksLimit: 5,
+              padding: 6,
               callback: function (val) {
-                const label = this.getLabelForValue(val);
-                return label?.slice(0, 4);
+                var label = this.getLabelForValue(val);
+                return label ? label.slice(0, 4) : '';
               }
             },
             border: { display: false }
@@ -251,12 +298,12 @@
             grid: { color: ruleSoft, drawTicks: false },
             ticks: {
               color: muted,
-              font: { family: 'Inter, system-ui, sans-serif', size: 11 },
-              padding: 8,
+              font: { family: 'Inter, system-ui, sans-serif', size: 10 },
+              padding: 6,
               maxTicksLimit: 5,
-              callback: v => currency === 'USD'
-                ? formatCompactUSD(v)
-                : formatCompactIDR(v)
+              callback: function(v) {
+                return currency === 'USD' ? formatCompactUSD(v) : formatCompactIDR(v);
+              }
             },
             border: { display: false }
           }
@@ -265,75 +312,89 @@
     });
   }
 
-  function formatCompactIDR(v) {
-    if (v >= 1_000_000) return (v / 1_000_000).toFixed(v >= 10_000_000 ? 1 : 2) + ' jt';
-    if (v >= 1_000) return Math.round(v / 1_000) + ' rb';
-    return Math.round(v).toLocaleString('id-ID');
-  }
-
-  function formatCompactUSD(v) {
-    if (v >= 1000) return '$' + (v / 1000).toFixed(v >= 10000 ? 1 : 2) + 'k';
-    return '$' + Math.round(v).toLocaleString('en-US');
-  }
+  // ---------- Render ----------
 
   function render() {
-    const projected = projectData(goldData, currentCurrency);
-    const filtered = filterByYears(projected, currentRangeKey);
+    var projected = projectData(goldData, currentCurrency);
+    var filtered = filterByYears(projected, currentRangeKey);
     buildChart(filtered, currentCurrency);
     updateLegend(filtered, currentCurrency);
-    currentRangeEl.textContent = currentRangeKey === 'all' ? 'All' : `${currentRangeKey}Y`;
+    currentRangeEl.textContent = currentRangeKey === 'all' ? 'All' : currentRangeKey + 'Y';
   }
 
-  document.querySelectorAll('.ranges button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.ranges button').forEach(b => b.classList.remove('active'));
+  // ---------- Event Handlers ----------
+
+  // Range buttons
+  document.querySelectorAll('.ranges button').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.ranges button').forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
       currentRangeKey = btn.dataset.range;
       render();
     });
   });
 
-  document.querySelectorAll('.ccy-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const ccy = btn.dataset.ccy;
+  // Currency toggle
+  document.querySelectorAll('.ccy-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var ccy = btn.dataset.ccy;
       if (ccy === 'IDR' && idrRateMap.size === 0) {
-        alert('Data kurs IDR belum tersedia (build gagal fetch frankfurter.app).');
+        alert('Data kurs IDR belum tersedia.');
         return;
       }
-      document.querySelectorAll('.ccy-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.ccy-btn').forEach(function(b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-checked', 'false');
+      });
       btn.classList.add('active');
+      btn.setAttribute('aria-checked', 'true');
       currentCurrency = ccy;
       render();
     });
   });
 
-  document.getElementById('exportBtn').addEventListener('click', () => {
-    const projected = projectData(goldData, currentCurrency);
-    const header = currentCurrency === 'USD' ? 'date,price_usd_per_oz' : 'date,price_idr_per_gram';
-    const rows = [header, ...projected.map(d => `${d.date},${d.value.toFixed(2)}`)].join('\n');
-    const blob = new Blob([rows], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+  // Export CSV
+  document.getElementById('exportBtn').addEventListener('click', function() {
+    var projected = projectData(goldData, currentCurrency);
+    var header = currentCurrency === 'USD' ? 'date,price_usd_per_oz' : 'date,price_idr_per_gram';
+    var rows = [header].concat(projected.map(function(d) { return d.date + ',' + d.value.toFixed(2); })).join('\n');
+    var blob = new Blob([rows], { type: 'text/csv' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
     a.href = url;
-    a.download = `harga-emas-${currentCurrency.toLowerCase()}.csv`;
+    a.download = 'harga-emas-' + currentCurrency.toLowerCase() + '.csv';
     a.click();
     URL.revokeObjectURL(url);
   });
 
-  legendPriceEl.textContent = 'Loading…';
-  loadAll().then((buildInfo) => {
+  // Handle dark mode changes — rebuild chart gradient
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+      if (goldData.length) render();
+    });
+  }
+
+  // ---------- Init ----------
+
+  loadAll().then(function(buildInfo) {
+    // Mark loaded to hide skeletons
+    document.body.classList.add('loaded');
+
     if (idrRateMap.size === 0) {
       currentCurrency = 'USD';
-      document.querySelectorAll('.ccy-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.ccy === 'USD');
+      document.querySelectorAll('.ccy-btn').forEach(function(b) {
+        var isUSD = b.dataset.ccy === 'USD';
+        b.classList.toggle('active', isUSD);
+        b.setAttribute('aria-checked', String(isUSD));
       });
     }
+
     setTodayLabel();
     render();
 
     if (buildInfoEl && buildInfo) {
-      const built = (buildInfo.built_at || '').slice(0, 10);
-      buildInfoEl.textContent = `Data terakhir diperbarui ${built}`;
+      var built = (buildInfo.built_at || '').slice(0, 10);
+      buildInfoEl.textContent = 'Data terakhir diperbarui ' + built;
     }
   });
 })();

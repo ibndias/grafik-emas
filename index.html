@@ -2,14 +2,18 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#F4F1EA" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#F4F1EA" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#1A1915" media="(prefers-color-scheme: dark)" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="description" content="Grafik historis harga emas dunia dalam IDR per gram dan USD per troy ounce, dari 1833 hingga hari ini." />
   <title>Harga Emas — Grafik Historis</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600&display=swap" />
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <main class="page">
@@ -18,22 +22,26 @@
       <h1>Harga Emas</h1>
     </header>
 
-    <section class="hero">
+    <section class="hero" aria-label="Harga terkini">
       <p class="hero-eyebrow">
         <span class="dot" aria-hidden="true"></span>
         <span id="todayLabel">Hari ini</span>
       </p>
       <p class="hero-price-line">
-        <span class="hero-price" id="legendPrice">—</span>
+        <span class="hero-price" id="legendPrice">
+          <span class="skeleton skeleton-price" aria-label="Memuat harga…"></span>
+        </span>
       </p>
       <p class="hero-meta">
         <span class="hero-unit" id="legendUnit">IDR / gram</span>
-        <span class="hero-sep">·</span>
-        <span class="hero-change" id="legendChange">—</span>
+        <span class="hero-sep" aria-hidden="true">·</span>
+        <span class="hero-change" id="legendChange">
+          <span class="skeleton skeleton-change"></span>
+        </span>
       </p>
     </section>
 
-    <section class="card">
+    <section class="card" aria-label="Grafik harga">
       <div class="chart-head">
         <span class="chart-title">Pergerakan harga</span>
         <span class="chart-range" id="currentRange">10Y</span>
@@ -43,24 +51,24 @@
         <canvas id="chart"></canvas>
       </div>
 
-      <nav class="ranges" aria-label="Time range">
-        <button data-range="1">1Y</button>
-        <button data-range="5">5Y</button>
-        <button data-range="10" class="active">10Y</button>
-        <button data-range="25">25Y</button>
-        <button data-range="50">50Y</button>
-        <button data-range="100">100Y</button>
-        <button data-range="all">All</button>
+      <nav class="ranges" aria-label="Rentang waktu">
+        <button data-range="1" type="button">1Y</button>
+        <button data-range="5" type="button">5Y</button>
+        <button data-range="10" type="button" class="active">10Y</button>
+        <button data-range="25" type="button">25Y</button>
+        <button data-range="50" type="button">50Y</button>
+        <button data-range="100" type="button">100Y</button>
+        <button data-range="all" type="button">All</button>
       </nav>
     </section>
 
-    <section class="actions">
-      <div class="ccy-toggle" role="group" aria-label="Mata uang">
-        <button class="ccy-btn" data-ccy="USD">USD / oz</button>
-        <button class="ccy-btn active" data-ccy="IDR">IDR / gram</button>
+    <section class="actions" aria-label="Opsi">
+      <div class="ccy-toggle" role="radiogroup" aria-label="Mata uang">
+        <button class="ccy-btn" data-ccy="USD" type="button" role="radio" aria-checked="false">USD / oz</button>
+        <button class="ccy-btn active" data-ccy="IDR" type="button" role="radio" aria-checked="true">IDR / gram</button>
       </div>
-      <button class="export" id="exportBtn" aria-label="Export CSV">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <button class="export" id="exportBtn" type="button" aria-label="Export data CSV">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         <span>Export</span>
       </button>
     </section>
@@ -69,11 +77,11 @@
       <p>
         <strong>Emas</strong> — Yahoo Finance <code>GC=F</code> (COMEX gold futures, harian) untuk 2000+,
         digabung <a href="https://datahub.io/core/gold-prices" target="_blank" rel="noopener">datahub.io</a>
-        bulanan untuk pra-2000 dan harga resmi era Gold Standard / Bretton Woods.
+        bulanan untuk pra-2000, dan harga resmi era Gold Standard / Bretton Woods.
       </p>
       <p>
         <strong>Kurs</strong> — <a href="https://www.frankfurter.app" target="_blank" rel="noopener">frankfurter.app</a>
-        (ECB, harian sejak 1999). IDR/gram = USD/oz × kurs ÷ 31,1035 troy ounce per gram. Mode IDR menampilkan data 1999+.
+        (ECB, harian sejak 1999). IDR/gram = USD/oz × kurs ÷ 31,1035. Mode IDR menampilkan data 1999+.
       </p>
       <p class="build-info" id="buildInfo"></p>
     </footer>

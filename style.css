@@ -1,7 +1,12 @@
+/* =============================================
+   Harga Emas — Mobile-First Design System
+   ============================================= */
+
 :root {
   --bg: #F4F1EA;
   --bg-soft: #EDE9DF;
   --card: #FFFFFF;
+  --card-hover: #FAFAF7;
   --ink: #1A1915;
   --ink-soft: #4A4A45;
   --muted: #8A8A82;
@@ -9,16 +14,55 @@
   --rule-soft: #EFECE3;
   --accent: #C2724D;
   --accent-soft: rgba(194, 114, 77, 0.08);
+  --accent-glow: rgba(194, 114, 77, 0.18);
   --line: #1A1915;
-  --line-fill: rgba(194, 114, 77, 0.08);
-  --up: #5C7A50;
-  --down: #B85450;
-  --serif: "Source Serif 4", "Source Serif Pro", "Iowan Old Style", "Charter", "Apple Garamond", Georgia, "Times New Roman", serif;
-  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --line-fill-top: rgba(194, 114, 77, 0.14);
+  --line-fill-bottom: rgba(194, 114, 77, 0);
+  --up: #3D8B37;
+  --up-bg: rgba(61, 139, 55, 0.08);
+  --down: #C0392B;
+  --down-bg: rgba(192, 57, 43, 0.08);
+  --serif: "Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 2px rgba(26, 25, 21, 0.05);
+  --shadow-md: 0 2px 8px rgba(26, 25, 21, 0.06), 0 1px 2px rgba(26, 25, 21, 0.04);
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color-scheme: light dark;
 }
 
-* { box-sizing: border-box; }
+/* ---------- Dark Mode ---------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131210;
+    --bg-soft: #1E1D1A;
+    --card: #232220;
+    --card-hover: #2A2926;
+    --ink: #E8E5DD;
+    --ink-soft: #B5B2A8;
+    --muted: #7A776D;
+    --rule: #333028;
+    --rule-soft: #2A2823;
+    --accent: #D98B6A;
+    --accent-soft: rgba(217, 139, 106, 0.10);
+    --accent-glow: rgba(217, 139, 106, 0.20);
+    --line: #E8E5DD;
+    --line-fill-top: rgba(217, 139, 106, 0.18);
+    --line-fill-bottom: rgba(217, 139, 106, 0);
+    --up: #5DAE55;
+    --up-bg: rgba(93, 174, 85, 0.10);
+    --down: #E05545;
+    --down-bg: rgba(224, 85, 69, 0.10);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* ---------- Reset & Base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
 
 html, body {
   margin: 0;
@@ -31,44 +75,51 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
 }
 
 a {
   color: var(--accent);
   text-decoration: none;
-  border-bottom: 1px solid rgba(194, 114, 77, 0.3);
-  transition: border-color 0.15s ease;
+  border-bottom: 1px solid var(--accent-soft);
+  transition: border-color var(--transition);
 }
 a:hover { border-bottom-color: var(--accent); }
 
 code {
   font-family: var(--mono);
-  font-size: 0.85em;
+  font-size: 0.82em;
   background: var(--rule-soft);
-  padding: 1px 5px;
-  border-radius: 3px;
+  padding: 2px 6px;
+  border-radius: 4px;
   color: var(--ink-soft);
 }
 
 button {
   font-family: var(--sans);
   font-feature-settings: "tnum";
+  -webkit-appearance: none;
+  appearance: none;
 }
 
+/* ---------- Page Container (mobile-first) ---------- */
 .page {
   max-width: 680px;
   margin: 0 auto;
-  padding: 56px 24px 64px;
+  padding: 24px 16px 40px;
+  padding-top: max(24px, env(safe-area-inset-top, 24px));
+  padding-bottom: max(40px, env(safe-area-inset-bottom, 40px));
 }
 
 /* ---------- Masthead ---------- */
 .masthead {
-  margin-bottom: 36px;
+  margin-bottom: 24px;
 }
 
 .kicker {
-  margin: 0 0 14px;
-  font-size: 11px;
+  margin: 0 0 10px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -79,16 +130,38 @@ button {
   margin: 0;
   font-family: var(--serif);
   font-weight: 500;
-  font-size: 52px;
-  line-height: 1;
+  font-size: 36px;
+  line-height: 1.05;
   letter-spacing: -0.02em;
   color: var(--ink);
 }
 
+/* ---------- Skeleton Loading ---------- */
+.skeleton {
+  display: inline-block;
+  background: linear-gradient(90deg, var(--rule-soft) 25%, var(--bg-soft) 50%, var(--rule-soft) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+.skeleton-price {
+  width: 180px;
+  height: 36px;
+}
+.skeleton-change {
+  width: 140px;
+  height: 16px;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.loaded .skeleton { display: none; }
+
 /* ---------- Hero (today's price) ---------- */
 .hero {
-  margin-bottom: 40px;
-  padding-bottom: 36px;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
   border-bottom: 1px solid var(--rule);
 }
 
@@ -96,8 +169,8 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin: 0 0 18px;
-  font-size: 12px;
+  margin: 0 0 14px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.04em;
   color: var(--ink-soft);
@@ -110,30 +183,36 @@ button {
   background: var(--accent);
   box-shadow: 0 0 0 4px var(--accent-soft);
   display: inline-block;
+  animation: pulse 2.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 4px var(--accent-soft); }
+  50% { box-shadow: 0 0 0 7px var(--accent-glow); }
 }
 
 .hero-price-line {
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   line-height: 1;
 }
 
 .hero-price {
   font-family: var(--serif);
-  font-size: 64px;
+  font-size: 42px;
   font-weight: 500;
   letter-spacing: -0.025em;
   color: var(--ink);
   font-feature-settings: "tnum";
   line-height: 1;
   display: inline-block;
+  word-break: break-word;
 }
 
 .hero-meta {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin: 0;
-  font-size: 14px;
+  font-size: 12px;
   flex-wrap: wrap;
 }
 
@@ -149,44 +228,61 @@ button {
   font-weight: 600;
   color: var(--down);
   font-feature-settings: "tnum";
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--down-bg);
+  transition: color var(--transition), background var(--transition);
 }
-.hero-change.up { color: var(--up); }
-.hero-change::before {
-  content: "";
+.hero-change.up {
+  color: var(--up);
+  background: var(--up-bg);
+}
+.hero-change.neutral {
+  color: var(--muted);
+  background: var(--rule-soft);
+}
+
+/* Arrow indicator */
+.hero-change .arrow {
   display: inline-block;
   width: 0;
   height: 0;
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
   border-top: 5px solid currentColor;
-  margin-right: 6px;
-  vertical-align: middle;
-  transform: translateY(-1px);
+  flex-shrink: 0;
 }
-.hero-change.up::before {
+.hero-change.up .arrow {
   border-top: none;
   border-bottom: 5px solid currentColor;
+}
+.hero-change.neutral .arrow {
+  display: none;
 }
 
 /* ---------- Card ---------- */
 .card {
   background: var(--card);
   border: 1px solid var(--rule);
-  border-radius: 14px;
-  padding: 22px 22px 14px;
-  box-shadow: 0 1px 3px rgba(26, 25, 21, 0.04);
+  border-radius: var(--radius-lg);
+  padding: 16px 14px 12px;
+  box-shadow: var(--shadow-md);
+  transition: box-shadow var(--transition);
 }
 
 .chart-head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   padding: 0 4px;
 }
 
 .chart-title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -195,7 +291,7 @@ button {
 
 .chart-range {
   font-family: var(--serif);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--accent);
   font-feature-settings: "tnum";
@@ -203,56 +299,63 @@ button {
 
 .chart-wrapper {
   position: relative;
-  height: 320px;
-  margin: 0 -8px 14px;
+  height: 260px;
+  margin: 0 -6px 12px;
+  touch-action: pan-x pan-y;
 }
 
-/* ---------- Range tabs ---------- */
+/* ---------- Range Tabs ---------- */
 .ranges {
   display: flex;
   gap: 2px;
-  padding: 4px;
+  padding: 3px;
   background: var(--rule-soft);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   overflow-x: auto;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 .ranges::-webkit-scrollbar { display: none; }
 
 .ranges button {
-  flex: 1 1 auto;
-  min-width: 44px;
+  flex: 1 1 0;
+  min-width: 40px;
+  min-height: 44px;
   background: transparent;
   border: none;
   color: var(--ink-soft);
   font-size: 13px;
   font-weight: 600;
-  padding: 9px 6px;
-  border-radius: 7px;
+  padding: 10px 4px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background var(--transition), color var(--transition),
+              box-shadow var(--transition);
+  user-select: none;
+  -webkit-user-select: none;
 }
 .ranges button:hover { color: var(--ink); }
+.ranges button:active { transform: scale(0.96); }
 .ranges button.active {
   background: var(--card);
   color: var(--ink);
-  box-shadow: 0 1px 2px rgba(26, 25, 21, 0.08);
+  box-shadow: var(--shadow-sm);
 }
 
-/* ---------- Actions row ---------- */
+/* ---------- Actions Row ---------- */
 .actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  margin-top: 16px;
-  padding: 16px 4px 0;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 14px 2px 0;
 }
 
 .ccy-toggle {
   display: inline-flex;
   background: var(--bg-soft);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   padding: 3px;
   border: 1px solid var(--rule);
 }
@@ -264,45 +367,59 @@ button {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  padding: 8px 14px;
-  border-radius: 7px;
+  padding: 10px 14px;
+  min-height: 44px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background var(--transition), color var(--transition),
+              box-shadow var(--transition);
   white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .ccy-btn:hover { color: var(--ink); }
+.ccy-btn:active { transform: scale(0.96); }
 .ccy-btn.active {
   background: var(--card);
   color: var(--ink);
-  box-shadow: 0 1px 2px rgba(26, 25, 21, 0.08);
+  box-shadow: var(--shadow-sm);
 }
 
 .export {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   background: var(--card);
   border: 1px solid var(--rule);
   color: var(--ink-soft);
   font-size: 13px;
   font-weight: 500;
-  padding: 8px 14px;
-  border-radius: 9px;
+  padding: 10px 14px;
+  min-height: 44px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition: border-color var(--transition), color var(--transition),
+              background var(--transition);
+  user-select: none;
+  -webkit-user-select: none;
 }
 .export:hover { border-color: var(--ink-soft); color: var(--ink); }
-.export svg { display: block; }
+.export:active { background: var(--bg-soft); transform: scale(0.97); }
+.export svg { display: block; flex-shrink: 0; }
 
-/* ---------- Note (footer) ---------- */
+/* On mobile, hide export text but keep icon; ensure min 44px touch target */
+.export span { display: none; }
+
+/* ---------- Footer / Note ---------- */
 .note {
-  margin-top: 36px;
-  padding: 0 4px;
+  margin-top: 32px;
+  padding: 0 2px;
 }
 
 .note p {
-  margin: 0 0 12px;
-  font-size: 13px;
+  margin: 0 0 10px;
+  font-size: 12px;
   line-height: 1.65;
   color: var(--muted);
 }
@@ -313,61 +430,95 @@ button {
 }
 
 .build-info {
-  margin-top: 18px !important;
-  font-size: 11px !important;
+  margin-top: 16px !important;
+  font-size: 10px !important;
   font-family: var(--mono);
   color: var(--rule) !important;
 }
 
-/* ---------- Mobile ---------- */
-@media (max-width: 640px) {
-  .page { padding: 32px 18px 48px; }
-
-  .masthead { margin-bottom: 28px; }
-  .masthead h1 { font-size: 40px; }
-
-  .hero {
-    margin-bottom: 28px;
-    padding-bottom: 26px;
+/* ===========================================
+   Tablet+  (min-width: 480px)
+   =========================================== */
+@media (min-width: 480px) {
+  .page {
+    padding: 36px 24px 52px;
   }
 
-  .hero-eyebrow { margin-bottom: 14px; }
-  .hero-price { font-size: 48px; letter-spacing: -0.02em; }
-  .hero-meta { font-size: 13px; }
+  .masthead { margin-bottom: 32px; }
+  .masthead h1 { font-size: 44px; }
+
+  .kicker { font-size: 11px; }
+
+  .hero {
+    margin-bottom: 32px;
+    padding-bottom: 30px;
+  }
+  .hero-eyebrow { margin-bottom: 16px; font-size: 12px; }
+  .hero-price { font-size: 52px; }
+  .hero-meta { font-size: 13px; gap: 10px; }
 
   .card {
-    padding: 18px 16px 12px;
-    border-radius: 12px;
+    padding: 20px 20px 14px;
   }
 
   .chart-wrapper {
-    height: 280px;
-    margin: 0 -8px 12px;
+    height: 300px;
+    margin: 0 -8px 14px;
+  }
+
+  .export span { display: inline; }
+
+  .note p { font-size: 13px; }
+}
+
+/* ===========================================
+   Desktop  (min-width: 640px)
+   =========================================== */
+@media (min-width: 640px) {
+  .page {
+    padding: 56px 24px 64px;
+  }
+
+  .masthead { margin-bottom: 36px; }
+  .masthead h1 { font-size: 52px; }
+
+  .hero {
+    margin-bottom: 40px;
+    padding-bottom: 36px;
+  }
+  .hero-eyebrow { margin-bottom: 18px; }
+  .hero-price { font-size: 64px; }
+  .hero-meta { font-size: 14px; }
+
+  .card {
+    padding: 22px 22px 14px;
+    border-radius: var(--radius-lg);
+  }
+
+  .chart-wrapper {
+    height: 340px;
   }
 
   .ranges button {
-    min-width: 40px;
-    font-size: 12px;
-    padding: 9px 2px;
+    min-width: 44px;
+    font-size: 13px;
   }
 
-  .actions {
-    margin-top: 14px;
-    padding: 14px 0 0;
+  .ccy-btn { padding: 10px 16px; }
+
+  .note { margin-top: 36px; }
+}
+
+/* ---------- Focus visible for accessibility ---------- */
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
-
-  .ccy-btn { padding: 8px 11px; font-size: 11px; }
-  .export { padding: 8px 12px; font-size: 12px; }
-  .export span { display: none; }
-  .export { padding: 8px 10px; }
-}
-
-@media (max-width: 380px) {
-  .masthead h1 { font-size: 34px; }
-  .hero-price { font-size: 40px; }
-  .ranges button { font-size: 11px; min-width: 36px; }
-}
-
-@media (prefers-color-scheme: dark) {
-  /* Keep light theme by default — explicit dark not implemented yet. */
 }
