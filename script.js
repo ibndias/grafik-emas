@@ -112,7 +112,7 @@
   }
 
   function updateLegend(filtered, currency) {
-    legendUnitEl.textContent = currency === 'USD' ? 'Gold (USD/t.oz)' : 'Gold (IDR/gram)';
+    legendUnitEl.textContent = currency === 'USD' ? 'Gold · USD / oz' : 'Gold · IDR / gram';
     if (!filtered.length) {
       legendPriceEl.textContent = '—';
       legendChangeEl.textContent = '—';
@@ -138,18 +138,28 @@
 
   function buildChart(filtered, currency) {
     if (chart) chart.destroy();
+    const css = getComputedStyle(document.documentElement);
+    const lineColor = css.getPropertyValue('--line').trim() || '#2C5F8D';
+    const inkSoft = css.getPropertyValue('--ink-soft').trim() || '#4A4A45';
+    const muted = css.getPropertyValue('--muted').trim() || '#8A8A82';
+    const ruleSoft = css.getPropertyValue('--rule-soft').trim() || '#F0EEE6';
+    const card = css.getPropertyValue('--card').trim() || '#FFFFFF';
+
     chart = new Chart(ctx, {
       type: 'line',
       data: {
         labels: filtered.map(d => d.date),
         datasets: [{
           data: filtered.map(d => d.value),
-          borderColor: '#2c7be5',
-          backgroundColor: 'rgba(44,123,229,0.05)',
-          borderWidth: 1.2,
+          borderColor: lineColor,
+          backgroundColor: lineColor,
+          borderWidth: 1.4,
           pointRadius: 0,
           pointHoverRadius: 4,
-          tension: 0.1,
+          pointHoverBackgroundColor: lineColor,
+          pointHoverBorderColor: card,
+          pointHoverBorderWidth: 2,
+          tension: 0.18,
           fill: false
         }]
       },
@@ -158,37 +168,43 @@
         maintainAspectRatio: false,
         animation: false,
         interaction: { mode: 'index', intersect: false },
+        layout: { padding: { top: 8, right: 4, bottom: 0, left: 4 } },
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: '#fff',
-            titleColor: '#222',
-            bodyColor: '#2c7be5',
-            borderColor: '#e3e6eb',
+            backgroundColor: card,
+            titleColor: inkSoft,
+            bodyColor: lineColor,
+            titleFont: { family: 'Inter, system-ui, sans-serif', size: 12, weight: '500' },
+            bodyFont: { family: 'Source Serif 4, Georgia, serif', size: 14, weight: '500' },
+            borderColor: ruleSoft,
             borderWidth: 1,
             displayColors: false,
-            padding: 8,
+            padding: { top: 8, bottom: 8, left: 12, right: 12 },
+            cornerRadius: 6,
+            caretPadding: 8,
             callbacks: {
               title: items => items[0].label,
               label: item => {
                 const v = item.parsed.y;
                 if (currency === 'USD') {
-                  return `USD ${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/oz`;
+                  return `USD ${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / oz`;
                 }
-                return `Rp ${Math.round(v).toLocaleString('id-ID')}/gram`;
+                return `Rp ${Math.round(v).toLocaleString('id-ID')} / gram`;
               }
             }
           }
         },
         scales: {
           x: {
-            grid: { color: '#f0f2f5', drawTicks: false },
+            grid: { display: false },
             ticks: {
-              color: '#8892a0',
-              font: { size: 11 },
+              color: muted,
+              font: { family: 'Inter, system-ui, sans-serif', size: 11 },
               maxRotation: 0,
               autoSkip: true,
-              maxTicksLimit: 12,
+              maxTicksLimit: 6,
+              padding: 8,
               callback: function (val) {
                 const label = this.getLabelForValue(val);
                 return label?.slice(0, 4);
@@ -198,19 +214,27 @@
           },
           y: {
             position: 'right',
-            grid: { color: '#f0f2f5', drawTicks: false },
+            grid: { color: ruleSoft, drawTicks: false },
             ticks: {
-              color: '#8892a0',
-              font: { size: 11 },
+              color: muted,
+              font: { family: 'Inter, system-ui, sans-serif', size: 11 },
+              padding: 8,
+              maxTicksLimit: 6,
               callback: v => currency === 'USD'
                 ? v.toLocaleString('en-US')
-                : Math.round(v).toLocaleString('id-ID')
+                : formatCompactIDR(v)
             },
             border: { display: false }
           }
         }
       }
     });
+  }
+
+  function formatCompactIDR(v) {
+    if (v >= 1_000_000) return (v / 1_000_000).toFixed(v >= 10_000_000 ? 1 : 2) + ' jt';
+    if (v >= 1_000) return Math.round(v / 1_000) + ' rb';
+    return Math.round(v).toLocaleString('id-ID');
   }
 
   function render() {

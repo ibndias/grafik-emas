@@ -1,149 +1,306 @@
+:root {
+  --bg: #F5F4ED;
+  --card: #FFFFFF;
+  --ink: #1F1F1C;
+  --ink-soft: #4A4A45;
+  --muted: #8A8A82;
+  --rule: #E8E6DD;
+  --rule-soft: #F0EEE6;
+  --accent: #CC785C;
+  --accent-soft: rgba(204, 120, 92, 0.08);
+  --line: #2C5F8D;
+  --up: #4A7C59;
+  --down: #B85450;
+  --serif: "Source Serif 4", "Source Serif Pro", "Iowan Old Style", "Apple Garamond", Georgia, serif;
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
 * { box-sizing: border-box; }
 
-body {
+html, body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background: #f5f6f8;
-  color: #222;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-.app {
-  max-width: 1100px;
-  margin: 24px auto;
-  background: #fff;
-  border: 1px solid #e3e6eb;
-  border-radius: 6px;
-  padding: 12px 16px 4px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(204, 120, 92, 0.3);
+  transition: border-color 0.15s ease;
+}
+a:hover { border-bottom-color: var(--accent); }
+
+code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  background: var(--rule-soft);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--ink-soft);
 }
 
-.toolbar {
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+}
+
+/* ---------- Masthead ---------- */
+.masthead {
+  margin-bottom: 32px;
+}
+
+.kicker {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.masthead h1 {
+  margin: 0 0 12px;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 44px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.lede {
+  margin: 0;
+  font-size: 16px;
+  color: var(--ink-soft);
+  max-width: 56ch;
+}
+
+/* ---------- Card ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 28px 28px 20px;
+  box-shadow: 0 1px 2px rgba(31, 31, 28, 0.03);
+}
+
+/* ---------- Hero (price block) ---------- */
+.hero {
+  margin-bottom: 24px;
+}
+
+.hero-meta {
   display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.hero-label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.hero-range {
+  font-family: var(--serif);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+  font-feature-settings: "tnum";
+}
+
+.hero-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hero-price {
+  font-family: var(--serif);
+  font-size: 38px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  font-feature-settings: "tnum";
+  line-height: 1.1;
+}
+
+.hero-change {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--down);
+  font-feature-settings: "tnum";
+}
+.hero-change.up { color: var(--up); }
+
+/* ---------- Chart ---------- */
+.chart-wrapper {
+  position: relative;
+  height: 360px;
+  margin: 0 -8px 16px;
+}
+
+/* ---------- Range tabs ---------- */
+.ranges {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--rule-soft);
+  border-radius: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ranges::-webkit-scrollbar { display: none; }
+
+.ranges button {
+  flex: 1 1 auto;
+  min-width: 44px;
+  background: transparent;
+  border: none;
+  color: var(--ink-soft);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  font-feature-settings: "tnum";
+}
+.ranges button:hover { color: var(--ink); }
+.ranges button.active {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(31, 31, 28, 0.06);
+}
+
+/* ---------- Controls ---------- */
+.controls {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 4px 0 8px;
-  border-bottom: 1px solid #eef0f3;
-}
-
-.search {
-  flex: 0 0 200px;
-  padding: 6px 10px;
-  border: 1px solid #e3e6eb;
-  border-radius: 4px;
-  font-size: 13px;
-  background: #fafbfc;
-}
-
-.toolbar-icons {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  color: #5b6470;
-  font-size: 14px;
-}
-
-.range-label {
-  font-size: 13px;
-  color: #2c7be5;
-  font-weight: 500;
-}
-
-.icon { cursor: default; opacity: 0.75; }
-
-.toolbar-right {
-  margin-left: auto;
-  display: flex;
-  gap: 8px;
-  align-items: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule-soft);
 }
 
 .ccy-toggle {
   display: inline-flex;
-  border: 1px solid #e3e6eb;
-  border-radius: 4px;
-  overflow: hidden;
+  background: var(--rule-soft);
+  border-radius: 8px;
+  padding: 3px;
 }
 
 .ccy-btn {
-  background: #fff;
-  border: none;
-  color: #5b6470;
-  font-size: 12px;
-  padding: 4px 10px;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.ccy-btn + .ccy-btn { border-left: 1px solid #e3e6eb; }
-
-.ccy-btn.active {
-  background: #2c7be5;
-  color: #fff;
-}
-
-.ghost {
   background: transparent;
   border: none;
-  color: #5b6470;
-  font-size: 13px;
+  color: var(--ink-soft);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 7px 14px;
+  border-radius: 6px;
   cursor: pointer;
-  padding: 4px 8px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.ccy-btn:hover { color: var(--ink); }
+.ccy-btn.active {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(31, 31, 28, 0.08);
 }
 
-.ghost:hover { color: #222; }
-
-.legend {
-  padding: 10px 4px 4px;
+.export {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--ink-soft);
+  font-family: var(--sans);
   font-size: 13px;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
 }
+.export:hover { border-color: var(--ink-soft); color: var(--ink); }
+.export svg { display: block; }
 
-.legend-name { color: #444; margin-right: 8px; }
-.legend-price { color: #2c7be5; font-weight: 600; margin-right: 6px; }
-.legend-change { color: #d83b3b; font-weight: 500; }
-.legend-change.up { color: #1a9850; }
-
-.chart-wrapper {
-  position: relative;
-  height: 420px;
+/* ---------- Note (footer) ---------- */
+.note {
+  margin-top: 28px;
   padding: 0 4px;
 }
 
-.ranges {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  padding: 10px 0 14px;
+.note p {
+  margin: 0 0 10px;
   font-size: 13px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.note p:last-child { margin-bottom: 0; }
+.note strong {
+  color: var(--ink-soft);
+  font-weight: 600;
 }
 
-.ranges button {
-  background: transparent;
-  border: none;
-  color: #5b6470;
-  cursor: pointer;
-  padding: 4px 2px;
-  font-size: 13px;
-}
-
-.ranges button:hover { color: #2c7be5; }
-
-.ranges button.active {
-  color: #2c7be5;
-  border-bottom: 2px solid #2c7be5;
-  font-weight: 500;
-}
-
-.note {
-  font-size: 11px;
-  color: #8892a0;
-  padding: 8px 4px 4px;
-  border-top: 1px solid #eef0f3;
-  line-height: 1.5;
-}
-
+/* ---------- Mobile ---------- */
 @media (max-width: 640px) {
-  .app { margin: 0; border-radius: 0; }
-  .search { flex: 1 1 auto; }
-  .chart-wrapper { height: 320px; }
-  .ranges { gap: 12px; }
+  .page { padding: 28px 16px 48px; }
+
+  .masthead { margin-bottom: 24px; }
+  .masthead h1 { font-size: 34px; }
+  .lede { font-size: 15px; }
+
+  .card {
+    padding: 20px 18px 16px;
+    border-radius: 10px;
+    margin: 0 -4px;
+  }
+
+  .hero-price { font-size: 30px; }
+  .hero-change { font-size: 13px; }
+
+  .chart-wrapper {
+    height: 300px;
+    margin: 0 -10px 12px;
+  }
+
+  .ranges button {
+    min-width: 40px;
+    font-size: 12px;
+    padding: 8px 2px;
+  }
+
+  .controls {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .ccy-btn { padding: 7px 12px; font-size: 11px; }
+  .export { padding: 7px 12px; font-size: 12px; }
+}
+
+@media (max-width: 380px) {
+  .hero-price { font-size: 26px; }
+  .masthead h1 { font-size: 30px; }
+  .ranges button { font-size: 11px; min-width: 36px; }
 }

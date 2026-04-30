@@ -3,58 +3,73 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Grafik Harga Emas - 100 Tahun</title>
+  <meta name="theme-color" content="#F5F4ED" />
+  <title>Harga Emas — Grafik Historis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Inter:wght@400;500;600&display=swap" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
-  <div class="app">
-    <header class="toolbar">
-      <input type="text" class="search" placeholder="Search..." disabled />
-      <div class="toolbar-icons">
-        <span class="range-label" id="currentRange">10Y</span>
-        <span class="icon">📈</span>
-        <span class="icon">📅</span>
-        <span class="icon">＋</span>
-        <span class="icon">🔧</span>
+  <main class="page">
+    <header class="masthead">
+      <p class="kicker">Indonesia · LBMA Gold Price</p>
+      <h1>Harga Emas</h1>
+      <p class="lede">Grafik historis harga emas dari era Gold Standard hingga hari ini, dalam Rupiah dan Dolar.</p>
+    </header>
+
+    <section class="card">
+      <div class="hero">
+        <div class="hero-meta">
+          <span class="hero-label" id="legendUnit">Gold · IDR / gram</span>
+          <span class="hero-range" id="currentRange">10Y</span>
+        </div>
+        <div class="hero-price-row">
+          <span class="hero-price" id="legendPrice">—</span>
+          <span class="hero-change" id="legendChange">—</span>
+        </div>
       </div>
-      <div class="toolbar-right">
+
+      <div class="chart-wrapper">
+        <canvas id="chart"></canvas>
+      </div>
+
+      <nav class="ranges" aria-label="Time range">
+        <button data-range="1">1Y</button>
+        <button data-range="5">5Y</button>
+        <button data-range="10" class="active">10Y</button>
+        <button data-range="25">25Y</button>
+        <button data-range="50">50Y</button>
+        <button data-range="100">100Y</button>
+        <button data-range="all">All</button>
+      </nav>
+
+      <div class="controls">
         <div class="ccy-toggle" role="group" aria-label="Currency">
           <button class="ccy-btn" data-ccy="USD">USD</button>
           <button class="ccy-btn active" data-ccy="IDR">IDR</button>
         </div>
-        <button class="ghost" id="exportBtn">⬇ Export</button>
+        <button class="export" id="exportBtn" aria-label="Export CSV">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Export</span>
+        </button>
       </div>
-    </header>
-
-    <div class="legend">
-      <span class="legend-name" id="legendUnit">Gold (IDR/gram)</span>
-      <span class="legend-price" id="legendPrice">—</span>
-      <span class="legend-change" id="legendChange">—</span>
-    </div>
-
-    <div class="chart-wrapper">
-      <canvas id="chart"></canvas>
-    </div>
-
-    <div class="ranges">
-      <button data-range="1">1Y</button>
-      <button data-range="5">5Y</button>
-      <button data-range="10" class="active">10Y</button>
-      <button data-range="25">25Y</button>
-      <button data-range="50">50Y</button>
-      <button data-range="100">100Y</button>
-      <button data-range="all">All</button>
-    </div>
+    </section>
 
     <footer class="note">
-      Data emas: FRED <code>GOLDAMGBD228NLBM</code> (LBMA AM Fix, harian) bila tersedia,
-      fallback datahub.io <code>gold-prices</code> (bulanan). Pre-1968 statis (Gold Standard /
-      Bretton Woods). Kurs IDR: <a href="https://www.frankfurter.app">frankfurter.app</a>
-      (ECB, harian, 1999+). Konversi IDR/gram = USD/oz × kurs ÷ 31.1035. Mode IDR hanya
-      menampilkan data sejak 1999.
+      <p>
+        <strong>Data emas</strong> — FRED <code>GOLDAMGBD228NLBM</code> (LBMA AM Fix, harian) bila tersedia,
+        fallback ke <a href="https://datahub.io/core/gold-prices" target="_blank" rel="noopener">datahub.io</a> (bulanan, sejak 1833).
+        Pre-1968 menggunakan harga resmi era Gold Standard / Bretton Woods.
+      </p>
+      <p>
+        <strong>Kurs IDR</strong> — <a href="https://www.frankfurter.app" target="_blank" rel="noopener">frankfurter.app</a>
+        (ECB, harian sejak 1999). Konversi: <code>IDR/gram = USD/oz × kurs ÷ 31,1035</code>.
+        Mode IDR menampilkan data sejak 1999.
+      </p>
     </footer>
-  </div>
+  </main>
 
   <script src="data.js"></script>
   <script src="script.js"></script>
