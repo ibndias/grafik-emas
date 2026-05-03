@@ -66,7 +66,17 @@ production trigger build:
 
 ### Update data harian
 
-Build hanya jalan saat ada push. Untuk auto-update harian, bikin **build hook**
-di Netlify (*Site settings → Build & deploy → Build hooks*) lalu trigger via
-cron eksternal (cron-job.org / GitHub Actions schedule) yang `curl -X POST` ke
-URL build hook tiap pagi.
+GitHub Actions workflow di `.github/workflows/refresh-data.yml` jalan setiap
+hari pukul **06:30 WIB** (23:30 UTC). Workflow:
+
+1. Checkout branch `claude/gold-price-chart-website-TJLCz`
+2. Run `python3 scripts/fetch-data.py` — fetch Yahoo + datahub + frankfurter
+3. Kalau ada perubahan: commit `api/*.csv` + `api/build-info.json`, push ke
+   branch yang sama
+4. Push otomatis trigger Netlify rebuild → site update
+
+Bisa juga trigger manual lewat *Actions → Refresh gold + IDR data → Run workflow*
+di GitHub UI.
+
+Workflow butuh permission `contents: write` (sudah di-deklarasi). Tidak butuh
+secret tambahan — pakai `GITHUB_TOKEN` bawaan.

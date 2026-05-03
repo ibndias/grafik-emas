@@ -1,0 +1,45 @@
+name: Refresh gold + IDR data
+
+on:
+  schedule:
+    # 23:30 UTC = 06:30 WIB. Yahoo COMEX close is 17:00 ET ≈ 21:00/22:00 UTC,
+    # so by 23:30 UTC the day's close is settled.
+    - cron: '30 23 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/gold-price-chart-website-TJLCz
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Fetch latest data
+        run: python3 scripts/fetch-data.py
+
+      - name: Commit & push if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add api/gold.csv api/idr.csv api/build-info.json
+          if git diff --cached --quiet; then
+            echo "No data changes — skipping commit."
+            exit 0
+          fi
+          # Summarize what moved for the commit body.
+          GOLD_LAST=$(tail -1 api/gold.csv)
+          IDR_LAST=$(tail -1 api/idr.csv)
+          git commit -m "Auto-refresh data ($(date -u +%Y-%m-%d))" -m "gold last: $GOLD_LAST" -m "idr  last: $IDR_LAST"
+          git push origin claude/gold-price-chart-website-TJLCz
