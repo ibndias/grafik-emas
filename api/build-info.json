@@ -1,13 +1,13 @@
 {
-  "built_at": "2026-06-12T01:58:14Z",
+  "built_at": "2026-06-13T01:38:33Z",
   "gold_sources": [
     "datahub.io monthly (2321)"
   ],
   "idr_sources": [
-    "frankfurter.app (7025)"
+    "frankfurter.app (7026)"
   ],
   "gold_last_date": "2026-04-30",
   "gold_rows": 8452,
-  "idr_last_date": "2026-06-11",
-  "idr_rows": 7025
+  "idr_last_date": "2026-06-12",
+  "idr_rows": 7026
 }
